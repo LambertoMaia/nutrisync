@@ -1,0 +1,19 @@
+{
+  "name": "nutrysinc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LambertoMaia/nutrisync.git"
+  },
+  "author": "A gente",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LambertoMaia/nutrisync/issues"
+  },
+  "homepage": "https://github.com/LambertoMaia/nutrisync#readme"
+}
