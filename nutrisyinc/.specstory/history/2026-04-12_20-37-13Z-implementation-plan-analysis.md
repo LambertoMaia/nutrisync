@@ -644,7 +644,88 @@ _**Agent (composer-2-fast)**_
 
 <details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
 
-Status: **loading**
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+The hero title needs to be fixed to match the user's request: "Voc tem a receita." The hero title structure should have "Voc tem a receita." on the first line, followed by "A gente entrega" in italic green and " a marmita." in normal serif on the second line. The nested Text components need to be styled appropriately to achieve this layout. The hero title should display "Voc tem a receita." centered with the first line in bold serif font. The second line should show "A gente entrega" in italic green and " a marmita." in normal serif font, all aligned center. The styling needs to ensure proper line breaks and font variations for each part of the text. The hero title was incorrectly structured with three separate Text components. It should be fixed to properly display "Voc tem a receita." centered with the first line in bold serif font, and "A gente entrega a marmita." on the second line with "A gente entrega" in italic green and "a marmita." in normal serif font.
+
+The stepCard width was redundantly set to `width: '47%'` twice and should be adjusted using flexBasis or 48% minus gap for better responsiveness on narrow screens.
+
+Linter errors were identified and need to be addressed for proper code formatting and structure.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints">
+<details>
+<summary>Tool use: **read_lints**</summary>
+
+
+Parameters:
+
+```json
+{
+  "paths": [
+    "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\index.tsx"
+  ]
+}
+```
+Result:
+
+```json
+{
+  "linterErrorsByFile": [
+    {
+      "relativeWorkspacePath": "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\index.tsx"
+    }
+  ]
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints"><details>
+<summary>Tool use: **read_lints**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+I need to examine the current hero title structure in the file to ensure it matches the HTML semantics properly.
+
+Let me check the hero title section in the file to verify proper HTML semantic alignment. The hero title uses nested Text components with different styles, where the outer Text applies to all children and the inner Text with heroTitleEm style overrides for emphasis. The first line "Voc tem a receita." includes a newline and second line wrapped by outer Text. For " a marmita.", normal serif font is desired, matching the heroTitle style. On Android, nested Text may require explicit fontFamily on em part. Redundant Platform checks should be removed. For the stepCard width, I'll use flex properties for responsiveness: flexBasis: '47%', flexGrow: 1, and maxWidth: '100%' to create a responsive grid layout. For mobile, I'll simplify to width: '100%', maxWidth: 400, and alignSelf: 'center' for single column display, while maintaining a 2x2 grid on wider screens. The ScrollView content needs defined width for percentage flexBasis to work correctly in React Native.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+
+Fixing the hero title so the second line matches the prototype (italic only “A gente entrega”) and improving step-card responsiveness on narrow screens.
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
 
 </details>
 
@@ -654,3 +735,542 @@ Status: **loading**
 <summary>Tool use: **edit_file_v2**</summary>
 
 </details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+On wide layouts, two columns with 47% width may not wrap correctly if flexGrow is set to 1, so the parent stepsGrid should have justifyContent applied.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints">
+<details>
+<summary>Tool use: **read_lints**</summary>
+
+
+Parameters:
+
+```json
+{
+  "paths": [
+    "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\index.tsx"
+  ]
+}
+```
+Result:
+
+```json
+{
+  "linterErrorsByFile": [
+    {
+      "relativeWorkspacePath": "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\index.tsx"
+    }
+  ]
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints"><details>
+<summary>Tool use: **read_lints**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2">
+<details><summary>Tool use: **run_terminal_command_v2** • Run command: cd /d "E:\Faculdade\nutrisync\nutrisyinc" && npm run lint</summary>
+
+```bash
+cd /d "E:\Faculdade\nutrisync\nutrisyinc" && npm run lint
+```
+
+```
+No C:\Users\lambe\AppData\Local\Temp\ps-script-5d7185fd-4ea5-4a72-a219-29d0c7adf3ca.ps1:7 caractere:43
++ cd /d "E:\Faculdade\nutrisync\nutrisyinc" &amp;&amp; npm run lint
++                                           ~~
+O token '&amp;&amp;' não é um separador de instruções válido nesta versão.
+    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : InvalidEndOfLine
+ 
+
+```
+</details>
+</tool-use>
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2"><details>
+<summary>Tool use: **run_terminal_command_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2">
+<details><summary>Tool use: **run_terminal_command_v2** • Run command: Set-Location "E:\Faculdade\nutrisync\nutrisyinc"; npm run lint</summary>
+
+```bash
+Set-Location "E:\Faculdade\nutrisync\nutrisyinc"; npm run lint
+```
+
+```
+
+&gt; nutrisyinc@1.0.0 lint
+&gt; expo lint
+
+
+```
+</details>
+</tool-use>
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2"><details>
+<summary>Tool use: **run_terminal_command_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+Lint checks passed successfully.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+
+Here’s what changed in **`app/(tabs)/index.tsx`** only:
+
+### What you get
+- **Landing layout** aligned with `web-prototype/index.html`: top bar (logo + “Entrar” / “Cadastrar”), hero (badge, headline with italic “A gente entrega”, copy, two CTAs), “Como funciona” with four step cards, then the green **“Não tem receita?”** band with “Ver cardápios →”.
+- **Palette** taken from `web-prototype/styles.css` (greens, cream, beige, text colors).
+- **Typography**: Georgia/serif for titles; system sans for body (no font files or extra setup).
+- **Logo**: compact green tile + leaf emoji (no SVG assets).
+- **Interactions**: light haptics on presses. **`Ver cozinheiros`** calls `router.push('/explree')` so you can confirm navigation while marketplace routes are missing. **Entrar**, **Cadastrar**, primary CTA, and **Ver cardápios** only fire haptics for now (no routes to hit).
+- **Removed**: Parallax header, React logo, `HelloWave`, starter copy, and modal `Link`.
+
+### Note
+The screen still sits **inside the tab navigator**, so the **bottom tab bar** stays visible. Hiding it for a true full-screen landing would need a layout change (you asked not to touch other files).
+
+`npm run lint` completes successfully with this file.
+
+---
+
+_**User**_
+
+Remove the Expo bottom menu
+
+---
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+The user wishes to remove the Expo bottom tab bar/menu.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+
+Hiding the tab bar in the tabs layout.
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\_layout.tsx</summary>
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2"><details>
+<summary>Tool use: **read_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+I'll hide the tab bar using `tabBarStyle: { display: 'none' }` or `height: 0`. The recommended approach in React Navigation 6+ is:
+
+- Using `display: 'none'` in tabBarStyle
+- Setting `height: 0` as an alternative approach</details></think>
+
+_**Agent (composer-2-fast)**_
+
+
+Hiding the tab bar globally and removing now-unused tab UI imports.
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\_layout.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints">
+<details>
+<summary>Tool use: **read_lints**</summary>
+
+
+Parameters:
+
+```json
+{
+  "paths": [
+    "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\_layout.tsx"
+  ]
+}
+```
+Result:
+
+```json
+{
+  "linterErrorsByFile": [
+    {
+      "relativeWorkspacePath": "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\_layout.tsx"
+    }
+  ]
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints"><details>
+<summary>Tool use: **read_lints**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+
+Here’s what changed.
+
+### `app/(tabs)/_layout.tsx`
+- Set **`tabBarStyle: { display: 'none' }`** in `screenOptions` so the bottom tab bar is not shown.
+- Dropped **`HapticTab`**, **`IconSymbol`**, **`Colors`**, and **`useColorScheme`** since they were only used for the tab UI.
+
+The `(tabs)` routes (`index`, `explore`) are unchanged, so **`router.push('/explore')`** from the home screen still works; only the tab bar is hidden.
+
+---
+
+_**User**_
+
+Align the text on btnSecondary.
+
+---
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search">
+<details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+
+Parameters:
+
+```json
+{
+  "caseInsensitive": false,
+  "path": "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\index.tsx",
+  "pattern": "btnSecondary"
+}
+```
+Additional data:
+
+```json
+{
+  "isPruned": true,
+  "outputMode": "content",
+  "path": "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\index.tsx",
+  "pattern": "btnSecondary",
+  "topFiles": [
+    {
+      "matchCount": 4,
+      "uri": "app\\(tabs)\\index.tsx"
+    }
+  ],
+  "totalFiles": 1,
+  "totalMatches": 4
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search"><details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2"><details>
+<summary>Tool use: **read_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2"><details>
+<summary>Tool use: **read_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+The `textAlign: 'center'` property on `btnSecondary` (Pressable) does not center the text inside because Pressable doesn't apply textAlign to its children. I need to:
+
+- Use a Text component inside the Pressable to achieve centered text alignment
+- Apply textAlign directly to the Text component instead of the Pressable
+- Ensure proper styling structure to maintain layout consistency</details></think>
+
+_**Agent (composer-2-fast)**_
+
+
+Centering the label: `textAlign` on `Pressable` doesn't affect child `Text`. Adding `alignItems`/`justifyContent` on the button and `textAlign: 'center'` on the text.
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+Remove the invalid `id` attribute from Text components.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: E:\Faculdade\nutrisync\nutrisyinc\app\(tabs)\index.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+
+
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints">
+<details>
+<summary>Tool use: **read_lints**</summary>
+
+
+Parameters:
+
+```json
+{
+  "paths": [
+    "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\index.tsx"
+  ]
+}
+```
+Result:
+
+```json
+{
+  "linterErrorsByFile": [
+    {
+      "relativeWorkspacePath": "E:\\Faculdade\\nutrisync\\nutrisyinc\\app\\(tabs)\\index.tsx"
+    }
+  ]
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints"><details>
+<summary>Tool use: **read_lints**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+
+Here’s what was wrong: **`textAlign` on the `Pressable`** doesn’t affect the inner `Text` in React Native.
+
+**Updates:**
+- **`btnSecondary`:** `textAlign: 'center'` was removed and replaced with **`alignItems: 'center'`** and **`justifyContent: 'center'`** so the label is centered in the button.
+- **`btnSecondaryText`:** **`textAlign: 'center'`** so the line stays centered if it wraps.
+
+Also removed **`id="ver-cozinheiros"`** from `Text` (not a normal React Native pattern). If you need a hook for tests, use **`testID="ver-cozinheiros"`** instead.
