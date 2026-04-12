@@ -147,7 +147,7 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         </View>
-        <View style={styles.bottomSpacer} />
+      {/* <View style={styles.bottomSpacer} /> */}
       </ScrollView>
     </View>
   );
@@ -316,11 +316,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: C.beigeD,
+    width: '65%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   btnSecondaryText: {
     color: C.brownBtn,
     fontSize: 14,
     fontWeight: '600',
+    textAlign: 'center',
   },
   pressed: {
     opacity: 0.88,
