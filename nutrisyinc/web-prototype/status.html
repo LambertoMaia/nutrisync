@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSync — Status do Pedido</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ns-logo" viewBox="0 0 38 38">
+    <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
+    <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
+    <line x1="14" y1="9" x2="14" y2="20" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="14" y1="9" x2="16" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M22 7 C24 9 28 11 27 17 C25 15 21 13 22 7Z" fill="#a8d878"/>
+    <line x1="22" y1="7" x2="25.5" y2="15" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="screen active" id="s-status">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Início</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Pedido #0042</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div style="text-align:center;padding:1.4rem 1rem;background:linear-gradient(135deg,var(--green-l),var(--beige));border-radius:var(--radius-l);margin-bottom:1.1rem">
+        <div style="font-size:46px;margin-bottom:.4rem">🍱</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--green-d);margin-bottom:.25rem">Em preparo</div>
+        <div style="font-size:13px;color:var(--text-m)">Ana Paula está preparando suas marmitas</div>
+        <div style="font-size:12px;color:var(--text-l);margin-top:.3rem">Previsão: hoje às 18h00</div>
+      </div>
+      <div class="card" style="margin-bottom:1.1rem">
+        <div style="font-size:11px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.9rem">Acompanhamento</div>
+        <div style="position:relative;padding-left:26px">
+          <div style="position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--beige-d)"></div>
+          <div style="position:relative;margin-bottom:14px"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px #fff,0 0 0 3px var(--green)"></div><div style="font-size:13px;font-weight:600">Pedido recebido</div><div style="font-size:11px;color:var(--text-l)">Hoje, 12h30</div></div>
+          <div style="position:relative;margin-bottom:14px"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px #fff,0 0 0 3px var(--green)"></div><div style="font-size:13px;font-weight:600">Cozinheiro aceitou</div><div style="font-size:11px;color:var(--text-l)">Hoje, 12h45</div></div>
+          <div style="position:relative;margin-bottom:14px"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--green-mid);box-shadow:0 0 0 2px #fff,0 0 0 3px var(--green-mid)"></div><div style="font-size:13px;font-weight:600;color:var(--green-d)">Em preparo ← agora</div><div style="font-size:11px;color:var(--text-l)">Hoje, 14h00</div></div>
+          <div style="position:relative;margin-bottom:14px;opacity:.35"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--beige-mid)"></div><div style="font-size:13px">Pronto para entrega</div><div style="font-size:11px;color:var(--text-l)">Previsto: 17h00</div></div>
+          <div style="position:relative;opacity:.35"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--beige-mid)"></div><div style="font-size:13px">Entregue</div><div style="font-size:11px;color:var(--text-l)">Previsto: 18h00</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.7rem">Detalhes</div>
+        <div style="font-size:13px;color:var(--text-m);line-height:2">
+          <div style="display:flex;justify-content:space-between"><span>Cozinheiro</span><span style="font-weight:500">Ana Paula</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Marmitas</span><span style="font-weight:500">5 unidades</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Plano</span><span style="font-weight:500">Low carb · 5 dias</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Total</span><span style="font-weight:600;color:var(--green-d)">R$ 98,00</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="demo-fab" onclick="document.getElementById('dmenu').classList.toggle('open')">☰</button>
+<div class="demo-panel" id="dmenu">
+  <div class="demo-panel-hd">Navegar entre telas</div>
+  <div class="demo-panel-body">
+    <button class="dbtn" onclick="nav('s-home')">🏠 Landing page</button>
+    <button class="dbtn" onclick="nav('s-cadastro')">📝 Cadastro</button>
+    <button class="dbtn" onclick="nav('s-login')">🔑 Login</button>
+    <button class="dbtn" onclick="nav('s-home-user')">👤 Home cliente</button>
+    <button class="dbtn" onclick="nav('s-enviar-receita')">📷 Enviar receita</button>
+    <button class="dbtn" onclick="nav('s-cozinheiros')">🔍 Marketplace</button>
+    <button class="dbtn" onclick="nav('s-confirmar')">🛒 Confirmar pedido</button>
+    <button class="dbtn" onclick="nav('s-status')">📦 Status do pedido</button>
+    <button class="dbtn" onclick="nav('s-pedidos')">📋 Meus pedidos</button>
+    <button class="dbtn" onclick="nav('s-avaliacao')">⭐ Avaliação</button>
+    <button class="dbtn" onclick="nav('s-perfil')">👤 Perfil</button>
+    <button class="dbtn" onclick="nav('s-sem-receita')">🥗 Cardápios sugeridos</button>
+    <button class="dbtn" onclick="nav('s-painel-cook')">👨‍🍳 Painel cozinheiro</button>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>

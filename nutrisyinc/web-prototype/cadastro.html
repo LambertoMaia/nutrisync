@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSync — Cadastro</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ns-logo" viewBox="0 0 38 38">
+    <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
+    <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
+    <line x1="14" y1="9" x2="14" y2="20" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="14" y1="9" x2="16" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M22 7 C24 9 28 11 27 17 C25 15 21 13 22 7Z" fill="#a8d878"/>
+    <line x1="22" y1="7" x2="25.5" y2="15" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="screen active" id="s-cadastro">
+  <nav class="topnav">
+    <div class="logo-mark" onclick="go('s-home')">
+      <svg class="logo-svg"><use href="#ns-logo"/></svg>
+      <div><div class="logo-name">NutriSync</div><div class="logo-tag">sua receita, nossa marmita</div></div>
+    </div>
+    <button class="btn-nav btn-ghost" onclick="go('s-login')">Já tenho conta</button>
+  </nav>
+  <div class="scroll-body" style="background:var(--beige)">
+    <div class="form-wrap">
+      <div class="form-title">Criar conta</div>
+      <div class="form-sub">Escolha seu perfil para personalizar o cadastro</div>
+
+      <!-- SELETOR DE TIPO -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:1.3rem">
+        <div id="tp-u" onclick="selTipo('u')" style="border:2px solid var(--green);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;background:var(--green-l)">
+          <div style="font-size:22px;margin-bottom:.3rem">🧑</div>
+          <div style="font-size:13px;font-weight:600;color:var(--green-d)">Sou cliente</div>
+          <div style="font-size:11px;color:var(--text-l)">Quero pedir marmitas</div>
+        </div>
+        <div id="tp-c" onclick="selTipo('c')" style="border:2px solid var(--beige-mid);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;background:var(--white)">
+          <div style="font-size:22px;margin-bottom:.3rem">👨‍🍳</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Sou cozinheiro</div>
+          <div style="font-size:11px;color:var(--text-l)">Quero oferecer marmitas</div>
+        </div>
+      </div>
+
+      <!-- CAMPOS COMUNS -->
+      <div class="field"><label>Nome completo</label><input type="text" placeholder="Ex: Maria Silva"/></div>
+      <div class="field"><label>E-mail</label><input type="email" placeholder="maria@email.com"/></div>
+      <div class="field"><label>Telefone / WhatsApp</label><input type="tel" placeholder="(81) 99999-9999"/></div>
+      <div class="field"><label>Senha</label><input type="password" placeholder="Mínimo 8 caracteres"/></div>
+      <div class="field"><label>Confirmar senha</label><input type="password" placeholder="Repita a senha"/></div>
+
+      <!-- SEÇÃO CLIENTE -->
+      <div id="sec-cliente">
+        <div class="divider"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
+          <div style="width:28px;height:28px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">🎯</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em">Seu objetivo alimentar</div>
+        </div>
+        <div class="field">
+          <label>Objetivo principal</label>
+          <select>
+            <option>Emagrecer</option>
+            <option>Ganhar massa muscular</option>
+            <option>Manutenção do peso</option>
+            <option>Saúde e qualidade de vida</option>
+          </select>
+        </div>
+        <div class="field"><label>Restrições alimentares (opcional)</label><input type="text" placeholder="Ex: sem glúten, sem lactose, sem amendoim"/></div>
+        <div class="field"><label>Bairro para entrega</label><input type="text" placeholder="Ex: Boa Viagem, Recife"/></div>
+        <button class="btn-primary" style="width:100%;margin-top:.4rem;padding:13px" onclick="go('s-enviar-receita')">Criar minha conta</button>
+      </div>
+
+      <!-- SEÇÃO COZINHEIRO -->
+      <div id="sec-cozinheiro" style="display:none">
+        <div class="divider"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
+          <div style="width:28px;height:28px;background:#fff3cc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">🍳</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em">Informações do cozinheiro</div>
+        </div>
+        <div class="field"><label>Bairro / localização</label><input type="text" placeholder="Ex: Boa Viagem, Recife"/></div>
+        <div class="field"><label>Preço por marmita (R$)</label><input type="number" placeholder="Ex: 18" min="5" step="0.5"/></div>
+        <div class="field">
+          <label>Especialidades (selecione todas que se aplicam)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:.4rem" id="espec-grid">
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Low carb</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Hipertrofia</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Vegano</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Sem glúten</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Sem lactose</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Diabéticos</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Emagrecimento</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Manutenção</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Raio de entrega</label>
+          <select>
+            <option>Só meu bairro</option>
+            <option>Até 5 km</option>
+            <option>Até 10 km</option>
+            <option>Toda a cidade</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Sobre você (aparece no seu perfil público)</label>
+          <textarea placeholder="Ex: Cozinheira especializada em alimentação saudável há 3 anos. Sigo receitas de nutricionistas à risca e garanto gramatura correta..."></textarea>
+        </div>
+        <div style="background:var(--green-l);border-radius:10px;padding:.85rem;margin-bottom:1rem;font-size:12px;color:var(--green-d);line-height:1.6">
+          <strong>🔒 Verificação posterior:</strong> após o cadastro, nossa equipe entrará em contato via WhatsApp para verificar sua cozinha. Só cozinheiros verificados aparecem no marketplace.
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:.2rem;padding:13px;background:var(--brown-btn)" onclick="go('s-painel-cook')">Cadastrar como cozinheiro</button>
+      </div>
+
+      <div style="text-align:center;margin-top:.9rem;font-size:13px;color:var(--text-l)">Já tem conta? <span class="link" onclick="go('s-login')">Entrar</span></div>
+    </div>
+  </div>
+</div>
+
+<button class="demo-fab" onclick="document.getElementById('dmenu').classList.toggle('open')">☰</button>
+<div class="demo-panel" id="dmenu">
+  <div class="demo-panel-hd">Navegar entre telas</div>
+  <div class="demo-panel-body">
+    <button class="dbtn" onclick="nav('s-home')">🏠 Landing page</button>
+    <button class="dbtn" onclick="nav('s-cadastro')">📝 Cadastro</button>
+    <button class="dbtn" onclick="nav('s-login')">🔑 Login</button>
+    <button class="dbtn" onclick="nav('s-home-user')">👤 Home cliente</button>
+    <button class="dbtn" onclick="nav('s-enviar-receita')">📷 Enviar receita</button>
+    <button class="dbtn" onclick="nav('s-cozinheiros')">🔍 Marketplace</button>
+    <button class="dbtn" onclick="nav('s-confirmar')">🛒 Confirmar pedido</button>
+    <button class="dbtn" onclick="nav('s-status')">📦 Status do pedido</button>
+    <button class="dbtn" onclick="nav('s-pedidos')">📋 Meus pedidos</button>
+    <button class="dbtn" onclick="nav('s-avaliacao')">⭐ Avaliação</button>
+    <button class="dbtn" onclick="nav('s-perfil')">👤 Perfil</button>
+    <button class="dbtn" onclick="nav('s-sem-receita')">🥗 Cardápios sugeridos</button>
+    <button class="dbtn" onclick="nav('s-painel-cook')">👨‍🍳 Painel cozinheiro</button>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>

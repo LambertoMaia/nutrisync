@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSync — Home</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ns-logo" viewBox="0 0 38 38">
+    <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
+    <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
+    <line x1="14" y1="9" x2="14" y2="20" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="14" y1="9" x2="16" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M22 7 C24 9 28 11 27 17 C25 15 21 13 22 7Z" fill="#a8d878"/>
+    <line x1="22" y1="7" x2="25.5" y2="15" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="screen active" id="s-home">
+  <nav class="topnav">
+    <div class="logo-mark">
+      <svg class="logo-svg"><use href="#ns-logo"/></svg>
+      <div><div class="logo-name">NutriSync</div><div class="logo-tag">sua receita, nossa marmita</div></div>
+    </div>
+    <div class="nav-right">
+      <button class="btn-nav btn-ghost" onclick="go('s-login')">Entrar</button>
+      <button class="btn-nav btn-green" onclick="go('s-cadastro')">Cadastrar</button>
+    </div>
+  </nav>
+  <div class="scroll-body">
+    <div class="hero">
+      <div class="hero-badge">🥦 Marketplace de Marmitas Personalizadas</div>
+      <h1>Você tem a receita.<br><em>A gente entrega</em> a marmita.</h1>
+      <p>Envie o plano do seu nutricionista e cozinheiros parceiros montam suas marmitas exatamente como prescrito. Sem improvisar. Sem furar a dieta.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="go('s-cadastro')">Quero pedir minhas marmitas</button>
+        <button class="btn-secondary" onclick="go('s-cozinheiros')">Ver cozinheiros</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-title">Como funciona</div>
+      <div class="sec-sub">Do consultório à sua mesa em 4 passos</div>
+      <div class="steps-grid">
+        <div class="step-card"><div class="step-num">1</div><h3>Crie sua conta</h3><p>Cadastre perfil com objetivo e restrições alimentares.</p></div>
+        <div class="step-card"><div class="step-num">2</div><h3>Envie sua receita</h3><p>Foto do plano nutricional ou preencha um formulário.</p></div>
+        <div class="step-card"><div class="step-num">3</div><h3>Cozinheiro monta</h3><p>Profissional parceiro prepara conforme prescrito.</p></div>
+        <div class="step-card"><div class="step-num">4</div><h3>Receba e avalie</h3><p>Marmitas chegam prontas. Avalie e repita semanalmente.</p></div>
+      </div>
+    </div>
+    <div style="background:var(--green-l);padding:1.8rem 1.3rem">
+      <div style="max-width:860px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Não tem receita?</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:.4rem">Use nosso cardápio sugerido</div>
+          <div style="font-size:13px;color:var(--text-m);line-height:1.6">Planos de emagrecimento, hipertrofia ou manutenção — preparados por cozinheiros reais.</div>
+        </div>
+        <button class="btn-primary" onclick="go('s-sem-receita')" style="white-space:nowrap">Ver cardápios →</button>
+      </div>
+    </div>
+    <div style="height:1.5rem"></div>
+  </div>
+</div>
+
+<button class="demo-fab" onclick="document.getElementById('dmenu').classList.toggle('open')">☰</button>
+<div class="demo-panel" id="dmenu">
+  <div class="demo-panel-hd">Navegar entre telas</div>
+  <div class="demo-panel-body">
+    <button class="dbtn" onclick="nav('s-home')">🏠 Landing page</button>
+    <button class="dbtn" onclick="nav('s-cadastro')">📝 Cadastro</button>
+    <button class="dbtn" onclick="nav('s-login')">🔑 Login</button>
+    <button class="dbtn" onclick="nav('s-home-user')">👤 Home cliente</button>
+    <button class="dbtn" onclick="nav('s-enviar-receita')">📷 Enviar receita</button>
+    <button class="dbtn" onclick="nav('s-cozinheiros')">🔍 Marketplace</button>
+    <button class="dbtn" onclick="nav('s-confirmar')">🛒 Confirmar pedido</button>
+    <button class="dbtn" onclick="nav('s-status')">📦 Status do pedido</button>
+    <button class="dbtn" onclick="nav('s-pedidos')">📋 Meus pedidos</button>
+    <button class="dbtn" onclick="nav('s-avaliacao')">⭐ Avaliação</button>
+    <button class="dbtn" onclick="nav('s-perfil')">👤 Perfil</button>
+    <button class="dbtn" onclick="nav('s-sem-receita')">🥗 Cardápios sugeridos</button>
+    <button class="dbtn" onclick="nav('s-painel-cook')">👨‍🍳 Painel cozinheiro</button>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSync — Enviar Receita</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ns-logo" viewBox="0 0 38 38">
+    <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
+    <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
+    <line x1="14" y1="9" x2="14" y2="20" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="14" y1="9" x2="16" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M22 7 C24 9 28 11 27 17 C25 15 21 13 22 7Z" fill="#a8d878"/>
+    <line x1="22" y1="7" x2="25.5" y2="15" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="screen active" id="s-enviar-receita">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Enviar Receita</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body" style="background:var(--beige)">
+    <div class="form-wrap">
+      <div class="form-title">Sua prescrição</div>
+      <div class="form-sub">Quanto mais detalhes, melhor o cozinheiro prepara suas marmitas.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:1.3rem">
+        <div id="op-foto" onclick="selOp('foto')" style="border:2px solid var(--green);border-radius:12px;padding:.85rem;text-align:center;cursor:pointer;background:var(--green-l)">
+          <div style="font-size:20px;margin-bottom:.2rem">📷</div>
+          <div style="font-size:13px;font-weight:600;color:var(--green-d)">Foto da receita</div>
+          <div style="font-size:11px;color:var(--text-l)">Upload de imagem</div>
+        </div>
+        <div id="op-form" onclick="selOp('form')" style="border:2px solid var(--beige-mid);border-radius:12px;padding:.85rem;text-align:center;cursor:pointer;background:var(--white)">
+          <div style="font-size:20px;margin-bottom:.2rem">📝</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Formulário</div>
+          <div style="font-size:11px;color:var(--text-l)">Digitar manualmente</div>
+        </div>
+      </div>
+      <div id="area-foto">
+        <div class="upload-box">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#4a7c2f" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <p>Toque para selecionar a foto</p>
+          <span>JPG, PNG ou PDF — até 10MB</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-l);text-align:center;margin-top:.4rem">A foto vai diretamente para o cozinheiro escolhido</div>
+      </div>
+      <div id="area-form" style="display:none">
+        <div class="field"><label>Refeições por dia</label><select><option>3 refeições</option><option>4 refeições</option><option>5 refeições</option><option>6 refeições</option></select></div>
+        <div class="field"><label>Calorias diárias</label><input type="number" placeholder="Ex: 1800 kcal"/></div>
+        <div class="field"><label>Restrições e alergias</label><input type="text" placeholder="Ex: sem lactose, sem glúten"/></div>
+        <div class="field"><label>Alimentos proibidos</label><input type="text" placeholder="Ex: amendoim, frutos do mar"/></div>
+        <div class="field"><label>Observações do nutricionista</label><textarea placeholder="Cole aqui as orientações específicas..."></textarea></div>
+      </div>
+      <div class="divider"></div>
+      <div class="field"><label>Quantidade de dias</label><select><option>5 dias (seg–sex)</option><option>7 dias (semana completa)</option><option>3 dias</option></select></div>
+      <div class="field"><label>Porções por refeição</label><select><option>1 porção</option><option>2 porções</option></select></div>
+      <div class="field"><label>Observações adicionais (opcional)</label><textarea placeholder="Ex: sem pimenta, prefiro frango grelhado..."></textarea></div>
+      <button class="btn-primary" style="width:100%;padding:13px;margin-top:.4rem" onclick="go('s-cozinheiros')">Ver cozinheiros disponíveis →</button>
+    </div>
+  </div>
+</div>
+
+<button class="demo-fab" onclick="document.getElementById('dmenu').classList.toggle('open')">☰</button>
+<div class="demo-panel" id="dmenu">
+  <div class="demo-panel-hd">Navegar entre telas</div>
+  <div class="demo-panel-body">
+    <button class="dbtn" onclick="nav('s-home')">🏠 Landing page</button>
+    <button class="dbtn" onclick="nav('s-cadastro')">📝 Cadastro</button>
+    <button class="dbtn" onclick="nav('s-login')">🔑 Login</button>
+    <button class="dbtn" onclick="nav('s-home-user')">👤 Home cliente</button>
+    <button class="dbtn" onclick="nav('s-enviar-receita')">📷 Enviar receita</button>
+    <button class="dbtn" onclick="nav('s-cozinheiros')">🔍 Marketplace</button>
+    <button class="dbtn" onclick="nav('s-confirmar')">🛒 Confirmar pedido</button>
+    <button class="dbtn" onclick="nav('s-status')">📦 Status do pedido</button>
+    <button class="dbtn" onclick="nav('s-pedidos')">📋 Meus pedidos</button>
+    <button class="dbtn" onclick="nav('s-avaliacao')">⭐ Avaliação</button>
+    <button class="dbtn" onclick="nav('s-perfil')">👤 Perfil</button>
+    <button class="dbtn" onclick="nav('s-sem-receita')">🥗 Cardápios sugeridos</button>
+    <button class="dbtn" onclick="nav('s-painel-cook')">👨‍🍳 Painel cozinheiro</button>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>
