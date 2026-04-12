@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSync — MVP</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --green:#4a7c2f;--green-d:#2e5a18;--green-l:#eaf2e0;--green-mid:#6a9c4a;
+  --brown:#3d2b1a;--brown-btn:#5c3d20;
+  --beige:#f5f0e8;--beige-d:#ede5d4;--beige-mid:#d4c9b2;
+  --cream:#faf7f2;--white:#ffffff;
+  --text:#1e1a12;--text-m:#5a4e3a;--text-l:#8a7a65;
+  --radius:14px;--radius-l:22px;
+  --shadow:0 4px 24px rgba(46,90,24,.10);--shadow-l:0 10px 48px rgba(46,90,24,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#ddd8ce;color:var(--text)}
+.screen{display:none;min-height:100vh;flex-direction:column;background:var(--cream)}
+.screen.active{display:flex}
+/* NAV */
+nav.topnav{background:var(--white);border-bottom:1px solid var(--beige-d);padding:0 1.2rem;height:62px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.05)}
+.logo-mark{display:flex;align-items:center;gap:9px;text-decoration:none;cursor:pointer}
+.logo-svg{width:36px;height:36px;flex-shrink:0}
+.logo-name{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--green-d);letter-spacing:-.2px}
+.logo-tag{font-size:9px;font-weight:500;color:var(--text-l);letter-spacing:.07em;text-transform:uppercase;margin-top:1px}
+.nav-right{display:flex;align-items:center;gap:6px}
+.btn-nav{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;cursor:pointer;border:none;transition:.18s}
+.btn-ghost{background:transparent;color:var(--text-m)}.btn-ghost:hover{background:var(--beige)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:var(--green-d)}
+/* SCROLL BODY */
+.scroll-body{flex:1;overflow-y:auto}
+/* HERO */
+.hero{padding:3.5rem 1.3rem 2.5rem;text-align:center;background:linear-gradient(155deg,var(--cream) 0%,var(--green-l) 100%);position:relative;overflow:hidden}
+.hero-badge{display:inline-block;background:var(--green-l);color:var(--green-d);font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1px solid rgba(74,124,47,.25);margin-bottom:1rem;letter-spacing:.03em}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;color:var(--text);line-height:1.2;margin-bottom:.7rem}
+.hero h1 em{color:var(--green);font-style:italic}
+.hero p{font-size:14px;color:var(--text-m);max-width:460px;margin:0 auto 1.8rem;line-height:1.7}
+.hero-btns{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.btn-primary{background:var(--green);color:#fff;border:none;padding:12px 24px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:.18s;box-shadow:0 4px 14px rgba(74,124,47,.28)}
+.btn-primary:hover{background:var(--green-d);transform:translateY(-1px)}
+.btn-secondary{background:var(--white);color:var(--brown-btn);border:1.5px solid var(--beige-d);padding:12px 24px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:.18s}
+.btn-secondary:hover{border-color:var(--green);color:var(--green)}
+/* SECTION */
+.section{padding:1.5rem 1.3rem;max-width:860px;margin:0 auto;width:100%}
+.sec-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--text);margin-bottom:.3rem}
+.sec-sub{font-size:13px;color:var(--text-l);margin-bottom:1.4rem}
+/* CARDS */
+.card{background:var(--white);border:1px solid var(--beige-d);border-radius:var(--radius);padding:1.1rem 1.2rem;margin-bottom:10px}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.step-card{background:var(--white);border:1px solid var(--beige-d);border-radius:var(--radius);padding:1.1rem}
+.step-num{width:30px;height:30px;background:var(--green);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-bottom:.7rem}
+.step-card h3{font-size:13px;font-weight:600;margin-bottom:.3rem}
+.step-card p{font-size:12px;color:var(--text-m);line-height:1.55}
+/* COOK CARDS */
+.cook-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.cook-card{background:var(--white);border:1px solid var(--beige-d);border-radius:var(--radius-l);overflow:hidden;cursor:pointer;transition:.2s}
+.cook-card:hover{box-shadow:var(--shadow-l);transform:translateY(-3px)}
+.cook-img{width:100%;height:130px;background:linear-gradient(135deg,var(--green-l),var(--beige-d));display:flex;align-items:center;justify-content:center;font-size:44px}
+.cook-body{padding:.9rem}
+.cook-name{font-weight:600;font-size:14px;margin-bottom:1px}
+.cook-loc{font-size:11px;color:var(--text-l);margin-bottom:.5rem}
+.cook-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:.7rem}
+.tag{font-size:10px;padding:2px 7px;border-radius:5px;background:var(--beige);color:var(--text-m);font-weight:500}
+.tag-g{background:var(--green-l);color:var(--green-d)}
+.cook-footer{display:flex;align-items:center;justify-content:space-between}
+.stars{font-size:11px;color:var(--brown-btn);font-weight:600}
+.price-lbl{font-size:11px;color:var(--green-d);font-weight:600}
+/* FORM */
+.form-wrap{max-width:500px;margin:0 auto;width:100%;padding:1.8rem 1.3rem}
+.form-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;margin-bottom:.3rem}
+.form-sub{font-size:13px;color:var(--text-l);margin-bottom:1.5rem}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text-m);margin-bottom:.35rem;letter-spacing:.02em;text-transform:uppercase}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--beige-mid);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--white);color:var(--text);transition:.18s;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(74,124,47,.1)}
+.field textarea{resize:vertical;min-height:85px}
+.upload-box{border:2px dashed var(--beige-mid);border-radius:12px;padding:1.8rem;text-align:center;background:var(--white);cursor:pointer;transition:.2s}
+.upload-box:hover{border-color:var(--green);background:var(--green-l)}
+.upload-box p{font-size:13px;color:var(--text-l);margin-top:.5rem}
+.upload-box span{font-size:11px;color:var(--green);font-weight:600}
+/* STATUS */
+.status-track{display:flex;gap:0;margin-bottom:1.2rem;overflow:hidden;border-radius:9px;border:1px solid var(--beige-d)}
+.status-step{flex:1;padding:.6rem .3rem;text-align:center;font-size:10px;font-weight:600;background:var(--white);color:var(--text-l);border-right:1px solid var(--beige-d)}
+.status-step:last-child{border-right:none}
+.status-step.done{background:var(--green);color:#fff}
+.status-step.cur{background:var(--green-l);color:var(--green-d)}
+/* PEDIDO CARD */
+.pedido-card{background:var(--white);border:1px solid var(--beige-d);border-radius:var(--radius);padding:1.1rem;margin-bottom:10px}
+.pedido-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.7rem}
+.pedido-id{font-size:11px;color:var(--text-l)}
+.pedido-user{font-weight:600;font-size:14px}
+.pedido-info{font-size:12px;color:var(--text-m);margin-bottom:.7rem;line-height:1.55}
+.pbadge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px}
+.pbadge-new{background:#fff3cc;color:#7a4f00}
+.pbadge-prep{background:var(--green-l);color:var(--green-d)}
+.pbadge-done{background:#e8f0fb;color:#1a3a6b}
+.receita-box{background:var(--beige);border-radius:8px;padding:.75rem;margin-bottom:.75rem;font-size:12px;color:var(--text-m);line-height:1.6;border-left:3px solid var(--green)}
+.receita-lbl{font-size:9px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.25rem}
+.pedido-actions{display:flex;gap:7px}
+.btn-accept{flex:1;background:var(--green);color:#fff;border:none;padding:9px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.btn-reject{flex:1;background:transparent;color:var(--text-m);border:1.5px solid var(--beige-mid);padding:9px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer}
+/* BOTTOM NAV */
+.bottom-nav{position:sticky;bottom:0;background:var(--white);border-top:1px solid var(--beige-d);display:flex;padding:.5rem 0;z-index:100;box-shadow:0 -3px 12px rgba(0,0,0,.06)}
+.bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:.3rem;border:none;background:none;font-family:'DM Sans',sans-serif;color:var(--text-l)}
+.bnav-btn span{font-size:9px;font-weight:500}
+.bnav-btn.on{color:var(--green)}
+/* AVATAR */
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--green-d);flex-shrink:0;cursor:pointer}
+/* MISC */
+.chip{display:inline-flex;align-items:center;gap:3px;background:var(--green-l);color:var(--green-d);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;margin:2px}
+.divider{height:1px;background:var(--beige-d);margin:.9rem 0}
+.link{color:var(--green);font-size:13px;font-weight:500;cursor:pointer}
+.link:hover{text-decoration:underline}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:var(--radius-l) var(--radius-l) 0 0;width:100%;max-width:500px;padding:1.4rem;max-height:88vh;overflow-y:auto}
+.modal-handle{width:38px;height:4px;background:var(--beige-mid);border-radius:2px;margin:0 auto 1.1rem}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;margin-bottom:.25rem}
+@media(min-width:560px){.overlay{align-items:center}.modal{border-radius:var(--radius-l);max-width:460px;margin:1rem}}
+/* DEMO MENU */
+.demo-fab{position:fixed;bottom:76px;right:14px;z-index:300;width:42px;height:42px;border-radius:50%;background:var(--brown-btn);color:#fff;border:none;font-size:16px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.demo-panel{display:none;position:fixed;bottom:126px;right:14px;z-index:300;background:var(--white);border:1px solid var(--beige-d);border-radius:var(--radius);box-shadow:var(--shadow-l);min-width:210px;overflow:hidden}
+.demo-panel.open{display:block}
+.demo-panel-hd{padding:.5rem .9rem;font-size:10px;font-weight:700;color:var(--text-l);text-transform:uppercase;letter-spacing:.06em;background:var(--beige);border-bottom:1px solid var(--beige-d)}
+.demo-panel-body{max-height:300px;overflow-y:auto}
+.dbtn{display:block;width:100%;text-align:left;padding:.55rem .9rem;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);cursor:pointer}
+.dbtn:hover{background:var(--beige)}
+</style>
+</head>
+<body>
+
+<!-- SVG LOGO REUTILIZÁVEL (via <use>) -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ns-logo" viewBox="0 0 38 38">
+    <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
+    <!-- tigela -->
+    <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
+    <!-- garfo -->
+    <line x1="14" y1="9" x2="14" y2="20" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="14" y1="9" x2="16" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <!-- folha viva -->
+    <path d="M22 7 C24 9 28 11 27 17 C25 15 21 13 22 7Z" fill="#a8d878"/>
+    <line x1="22" y1="7" x2="25.5" y2="15" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<!-- ════════════════════════════════════════
+  TELA 1 — LANDING
+════════════════════════════════════════ -->
+<div class="screen active" id="s-home">
+  <nav class="topnav">
+    <div class="logo-mark">
+      <svg class="logo-svg"><use href="#ns-logo"/></svg>
+      <div><div class="logo-name">NutriSync</div><div class="logo-tag">sua receita, nossa marmita</div></div>
+    </div>
+    <div class="nav-right">
+      <button class="btn-nav btn-ghost" onclick="go('s-login')">Entrar</button>
+      <button class="btn-nav btn-green" onclick="go('s-cadastro')">Cadastrar</button>
+    </div>
+  </nav>
+  <div class="scroll-body">
+    <div class="hero">
+      <div class="hero-badge">🥦 Marketplace de Marmitas Personalizadas</div>
+      <h1>Você tem a receita.<br><em>A gente entrega</em> a marmita.</h1>
+      <p>Envie o plano do seu nutricionista e cozinheiros parceiros montam suas marmitas exatamente como prescrito. Sem improvisar. Sem furar a dieta.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="go('s-cadastro')">Quero pedir minhas marmitas</button>
+        <button class="btn-secondary" onclick="go('s-cozinheiros')">Ver cozinheiros</button>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-title">Como funciona</div>
+      <div class="sec-sub">Do consultório à sua mesa em 4 passos</div>
+      <div class="steps-grid">
+        <div class="step-card"><div class="step-num">1</div><h3>Crie sua conta</h3><p>Cadastre perfil com objetivo e restrições alimentares.</p></div>
+        <div class="step-card"><div class="step-num">2</div><h3>Envie sua receita</h3><p>Foto do plano nutricional ou preencha um formulário.</p></div>
+        <div class="step-card"><div class="step-num">3</div><h3>Cozinheiro monta</h3><p>Profissional parceiro prepara conforme prescrito.</p></div>
+        <div class="step-card"><div class="step-num">4</div><h3>Receba e avalie</h3><p>Marmitas chegam prontas. Avalie e repita semanalmente.</p></div>
+      </div>
+    </div>
+    <div style="background:var(--green-l);padding:1.8rem 1.3rem">
+      <div style="max-width:860px;margin:0 auto;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Não tem receita?</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:.4rem">Use nosso cardápio sugerido</div>
+          <div style="font-size:13px;color:var(--text-m);line-height:1.6">Planos de emagrecimento, hipertrofia ou manutenção — preparados por cozinheiros reais.</div>
+        </div>
+        <button class="btn-primary" onclick="go('s-sem-receita')" style="white-space:nowrap">Ver cardápios →</button>
+      </div>
+    </div>
+    <div style="height:1.5rem"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 2 — CADASTRO
+════════════════════════════════════════ -->
+<div class="screen" id="s-cadastro">
+  <nav class="topnav">
+    <div class="logo-mark" onclick="go('s-home')">
+      <svg class="logo-svg"><use href="#ns-logo"/></svg>
+      <div><div class="logo-name">NutriSync</div><div class="logo-tag">sua receita, nossa marmita</div></div>
+    </div>
+    <button class="btn-nav btn-ghost" onclick="go('s-login')">Já tenho conta</button>
+  </nav>
+  <div class="scroll-body" style="background:var(--beige)">
+    <div class="form-wrap">
+      <div class="form-title">Criar conta</div>
+      <div class="form-sub">Escolha seu perfil para personalizar o cadastro</div>
+
+      <!-- SELETOR DE TIPO -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:1.3rem">
+        <div id="tp-u" onclick="selTipo('u')" style="border:2px solid var(--green);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;background:var(--green-l)">
+          <div style="font-size:22px;margin-bottom:.3rem">🧑</div>
+          <div style="font-size:13px;font-weight:600;color:var(--green-d)">Sou cliente</div>
+          <div style="font-size:11px;color:var(--text-l)">Quero pedir marmitas</div>
+        </div>
+        <div id="tp-c" onclick="selTipo('c')" style="border:2px solid var(--beige-mid);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;background:var(--white)">
+          <div style="font-size:22px;margin-bottom:.3rem">👨‍🍳</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Sou cozinheiro</div>
+          <div style="font-size:11px;color:var(--text-l)">Quero oferecer marmitas</div>
+        </div>
+      </div>
+
+      <!-- CAMPOS COMUNS -->
+      <div class="field"><label>Nome completo</label><input type="text" placeholder="Ex: Maria Silva"/></div>
+      <div class="field"><label>E-mail</label><input type="email" placeholder="maria@email.com"/></div>
+      <div class="field"><label>Telefone / WhatsApp</label><input type="tel" placeholder="(81) 99999-9999"/></div>
+      <div class="field"><label>Senha</label><input type="password" placeholder="Mínimo 8 caracteres"/></div>
+      <div class="field"><label>Confirmar senha</label><input type="password" placeholder="Repita a senha"/></div>
+
+      <!-- SEÇÃO CLIENTE -->
+      <div id="sec-cliente">
+        <div class="divider"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
+          <div style="width:28px;height:28px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">🎯</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em">Seu objetivo alimentar</div>
+        </div>
+        <div class="field">
+          <label>Objetivo principal</label>
+          <select>
+            <option>Emagrecer</option>
+            <option>Ganhar massa muscular</option>
+            <option>Manutenção do peso</option>
+            <option>Saúde e qualidade de vida</option>
+          </select>
+        </div>
+        <div class="field"><label>Restrições alimentares (opcional)</label><input type="text" placeholder="Ex: sem glúten, sem lactose, sem amendoim"/></div>
+        <div class="field"><label>Bairro para entrega</label><input type="text" placeholder="Ex: Boa Viagem, Recife"/></div>
+        <button class="btn-primary" style="width:100%;margin-top:.4rem;padding:13px" onclick="go('s-enviar-receita')">Criar minha conta</button>
+      </div>
+
+      <!-- SEÇÃO COZINHEIRO -->
+      <div id="sec-cozinheiro" style="display:none">
+        <div class="divider"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
+          <div style="width:28px;height:28px;background:#fff3cc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">🍳</div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em">Informações do cozinheiro</div>
+        </div>
+        <div class="field"><label>Bairro / localização</label><input type="text" placeholder="Ex: Boa Viagem, Recife"/></div>
+        <div class="field"><label>Preço por marmita (R$)</label><input type="number" placeholder="Ex: 18" min="5" step="0.5"/></div>
+        <div class="field">
+          <label>Especialidades (selecione todas que se aplicam)</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:.4rem" id="espec-grid">
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Low carb</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Hipertrofia</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Vegano</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Sem glúten</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Sem lactose</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Diabéticos</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Emagrecimento</label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Manutenção</label>
+          </div>
+        </div>
+        <div class="field">
+          <label>Raio de entrega</label>
+          <select>
+            <option>Só meu bairro</option>
+            <option>Até 5 km</option>
+            <option>Até 10 km</option>
+            <option>Toda a cidade</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Sobre você (aparece no seu perfil público)</label>
+          <textarea placeholder="Ex: Cozinheira especializada em alimentação saudável há 3 anos. Sigo receitas de nutricionistas à risca e garanto gramatura correta..."></textarea>
+        </div>
+        <div style="background:var(--green-l);border-radius:10px;padding:.85rem;margin-bottom:1rem;font-size:12px;color:var(--green-d);line-height:1.6">
+          <strong>🔒 Verificação posterior:</strong> após o cadastro, nossa equipe entrará em contato via WhatsApp para verificar sua cozinha. Só cozinheiros verificados aparecem no marketplace.
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:.2rem;padding:13px;background:var(--brown-btn)" onclick="go('s-painel-cook')">Cadastrar como cozinheiro</button>
+      </div>
+
+      <div style="text-align:center;margin-top:.9rem;font-size:13px;color:var(--text-l)">Já tem conta? <span class="link" onclick="go('s-login')">Entrar</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 3 — LOGIN
+════════════════════════════════════════ -->
+<div class="screen" id="s-login">
+  <nav class="topnav">
+    <div class="logo-mark" onclick="go('s-home')">
+      <svg class="logo-svg"><use href="#ns-logo"/></svg>
+      <div><div class="logo-name">NutriSync</div><div class="logo-tag">sua receita, nossa marmita</div></div>
+    </div>
+  </nav>
+  <div class="scroll-body" style="background:var(--beige);display:flex;align-items:center">
+    <div class="form-wrap" style="margin:auto">
+      <div class="form-title">Bem-vindo de volta</div>
+      <div class="form-sub">Acesse sua conta NutriSync</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.3rem">
+        <button id="lt-u" onclick="selLogin('u')" style="padding:9px;border-radius:8px;border:1.5px solid var(--green);background:var(--green-l);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--green-d);cursor:pointer">Cliente</button>
+        <button id="lt-c" onclick="selLogin('c')" style="padding:9px;border-radius:8px;border:1.5px solid var(--beige-mid);background:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text-m);cursor:pointer">Cozinheiro</button>
+      </div>
+      <div class="field"><label>E-mail</label><input type="email" placeholder="seu@email.com"/></div>
+      <div class="field"><label>Senha</label><input type="password" placeholder="••••••••"/></div>
+      <div style="text-align:right;margin-bottom:1.1rem"><span class="link" style="font-size:12px">Esqueceu a senha?</span></div>
+      <button class="btn-primary" style="width:100%;padding:13px" onclick="go('s-home-user')">Entrar</button>
+      <div style="text-align:center;margin-top:.9rem;font-size:13px;color:var(--text-l)">Não tem conta? <span class="link" onclick="go('s-cadastro')">Cadastrar</span></div>
+      <div class="divider"></div>
+      <button class="btn-secondary" style="width:100%;padding:11px" onclick="go('s-painel-cook')">Entrar como cozinheiro (demo)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 4 — HOME CLIENTE
+════════════════════════════════════════ -->
+<div class="screen" id="s-home-user">
+  <nav class="topnav">
+    <div class="logo-mark"><svg class="logo-svg"><use href="#ns-logo"/></svg><div><div class="logo-name">NutriSync</div><div class="logo-tag">sua receita, nossa marmita</div></div></div>
+    <div class="avatar" onclick="go('s-perfil')">M</div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div style="display:flex;gap:11px;align-items:center;margin-bottom:1.3rem">
+        <div class="avatar" style="width:46px;height:46px;font-size:17px">M</div>
+        <div><div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700">Olá, Maria 👋</div><div style="font-size:12px;color:var(--text-l)">O que vamos comer essa semana?</div></div>
+      </div>
+      <!-- CTA PRINCIPAL -->
+      <div style="background:linear-gradient(135deg,var(--green-d),var(--green-mid));border-radius:var(--radius-l);padding:1.4rem;color:#fff;margin-bottom:9px;cursor:pointer" onclick="go('s-enviar-receita')">
+        <div style="font-size:10px;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem">Novo pedido</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;margin-bottom:.35rem">Enviar minha receita</div>
+        <div style="font-size:12px;opacity:.8;margin-bottom:.9rem">Foto ou formulário — cozinheiros recebem na hora</div>
+        <div style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.2);padding:6px 13px;border-radius:8px;font-size:13px;font-weight:600">Enviar agora →</div>
+      </div>
+      <button class="btn-secondary" style="width:100%;margin-bottom:1.3rem" onclick="go('s-sem-receita')">Sem receita — ver cardápios sugeridos</button>
+      <!-- PEDIDO ATIVO -->
+      <div style="font-weight:600;font-size:14px;margin-bottom:.7rem">Pedido em andamento</div>
+      <div class="pedido-card" onclick="go('s-status')" style="cursor:pointer">
+        <div class="pedido-header"><div><div class="pedido-id">Pedido #0042 · hoje</div><div class="pedido-user">Ana Paula</div></div><span class="pbadge pbadge-prep">Em preparo</span></div>
+        <div class="status-track"><div class="status-step done">Recebido</div><div class="status-step cur">Preparo</div><div class="status-step">Pronto</div><div class="status-step">Entregue</div></div>
+        <div style="font-size:12px;color:var(--text-l)">5 marmitas · Low carb · Previsão: hoje às 18h</div>
+      </div>
+      <!-- COZINHEIROS -->
+      <div style="font-weight:600;font-size:14px;margin:.5rem 0 .7rem">Cozinheiros próximos</div>
+      <div class="cook-grid">
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👩‍🍳</div><div class="cook-body"><div class="cook-name">Ana Paula</div><div class="cook-loc">📍 Boa Viagem</div><div class="cook-tags"><span class="tag tag-g">Low carb</span><span class="tag">Sem glúten</span></div><div class="cook-footer"><span class="stars">★ 4.9 (38)</span><span class="price-lbl">R$18/uni</span></div></div></div>
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👨‍🍳</div><div class="cook-body"><div class="cook-name">Carlos Melo</div><div class="cook-loc">📍 Casa Amarela</div><div class="cook-tags"><span class="tag tag-g">Hipertrofia</span><span class="tag">Vegano</span></div><div class="cook-footer"><span class="stars">★ 4.7 (21)</span><span class="price-lbl">R$22/uni</span></div></div></div>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="bnav-btn on"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Início</span></button>
+    <button class="bnav-btn" onclick="go('s-cozinheiros')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></button>
+    <button class="bnav-btn" onclick="go('s-pedidos')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><span>Pedidos</span></button>
+    <button class="bnav-btn" onclick="go('s-perfil')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Perfil</span></button>
+  </nav>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 5 — ENVIAR RECEITA
+════════════════════════════════════════ -->
+<div class="screen" id="s-enviar-receita">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Enviar Receita</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body" style="background:var(--beige)">
+    <div class="form-wrap">
+      <div class="form-title">Sua prescrição</div>
+      <div class="form-sub">Quanto mais detalhes, melhor o cozinheiro prepara suas marmitas.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:1.3rem">
+        <div id="op-foto" onclick="selOp('foto')" style="border:2px solid var(--green);border-radius:12px;padding:.85rem;text-align:center;cursor:pointer;background:var(--green-l)">
+          <div style="font-size:20px;margin-bottom:.2rem">📷</div>
+          <div style="font-size:13px;font-weight:600;color:var(--green-d)">Foto da receita</div>
+          <div style="font-size:11px;color:var(--text-l)">Upload de imagem</div>
+        </div>
+        <div id="op-form" onclick="selOp('form')" style="border:2px solid var(--beige-mid);border-radius:12px;padding:.85rem;text-align:center;cursor:pointer;background:var(--white)">
+          <div style="font-size:20px;margin-bottom:.2rem">📝</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Formulário</div>
+          <div style="font-size:11px;color:var(--text-l)">Digitar manualmente</div>
+        </div>
+      </div>
+      <div id="area-foto">
+        <div class="upload-box">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#4a7c2f" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <p>Toque para selecionar a foto</p>
+          <span>JPG, PNG ou PDF — até 10MB</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-l);text-align:center;margin-top:.4rem">A foto vai diretamente para o cozinheiro escolhido</div>
+      </div>
+      <div id="area-form" style="display:none">
+        <div class="field"><label>Refeições por dia</label><select><option>3 refeições</option><option>4 refeições</option><option>5 refeições</option><option>6 refeições</option></select></div>
+        <div class="field"><label>Calorias diárias</label><input type="number" placeholder="Ex: 1800 kcal"/></div>
+        <div class="field"><label>Restrições e alergias</label><input type="text" placeholder="Ex: sem lactose, sem glúten"/></div>
+        <div class="field"><label>Alimentos proibidos</label><input type="text" placeholder="Ex: amendoim, frutos do mar"/></div>
+        <div class="field"><label>Observações do nutricionista</label><textarea placeholder="Cole aqui as orientações específicas..."></textarea></div>
+      </div>
+      <div class="divider"></div>
+      <div class="field"><label>Quantidade de dias</label><select><option>5 dias (seg–sex)</option><option>7 dias (semana completa)</option><option>3 dias</option></select></div>
+      <div class="field"><label>Porções por refeição</label><select><option>1 porção</option><option>2 porções</option></select></div>
+      <div class="field"><label>Observações adicionais (opcional)</label><textarea placeholder="Ex: sem pimenta, prefiro frango grelhado..."></textarea></div>
+      <button class="btn-primary" style="width:100%;padding:13px;margin-top:.4rem" onclick="go('s-cozinheiros')">Ver cozinheiros disponíveis →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 6 — MARKETPLACE COZINHEIROS
+════════════════════════════════════════ -->
+<div class="screen" id="s-cozinheiros">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Cozinheiros</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div style="position:relative;margin-bottom:.7rem">
+        <input type="text" placeholder="Buscar por especialidade, bairro..." style="width:100%;padding:10px 13px 10px 36px;border:1.5px solid var(--beige-mid);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--white);outline:none"/>
+        <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%)" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a7a65" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+      <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:.3rem;margin-bottom:1rem">
+        <span class="chip" style="cursor:pointer;white-space:nowrap">Todos</span>
+        <span style="display:inline-flex;border:1px solid var(--beige-mid);color:var(--text-m);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;cursor:pointer;background:var(--white)">Low carb</span>
+        <span style="display:inline-flex;border:1px solid var(--beige-mid);color:var(--text-m);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;cursor:pointer;background:var(--white)">Hipertrofia</span>
+        <span style="display:inline-flex;border:1px solid var(--beige-mid);color:var(--text-m);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;cursor:pointer;background:var(--white)">Vegano</span>
+        <span style="display:inline-flex;border:1px solid var(--beige-mid);color:var(--text-m);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;cursor:pointer;background:var(--white)">Sem glúten</span>
+      </div>
+      <div class="cook-grid">
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👩‍🍳</div><div class="cook-body"><div class="cook-name">Ana Paula</div><div class="cook-loc">📍 Boa Viagem</div><div class="cook-tags"><span class="tag tag-g">Low carb</span><span class="tag">Sem glúten</span></div><div class="cook-footer"><span class="stars">★ 4.9 (38)</span><span class="price-lbl">R$18/uni</span></div></div></div>
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👨‍🍳</div><div class="cook-body"><div class="cook-name">Carlos Melo</div><div class="cook-loc">📍 Casa Amarela</div><div class="cook-tags"><span class="tag tag-g">Hipertrofia</span><span class="tag">Vegano</span></div><div class="cook-footer"><span class="stars">★ 4.7 (21)</span><span class="price-lbl">R$22/uni</span></div></div></div>
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👩‍🍳</div><div class="cook-body"><div class="cook-name">Fernanda Lima</div><div class="cook-loc">📍 Graças</div><div class="cook-tags"><span class="tag tag-g">Emagrecimento</span><span class="tag">Diabéticos</span></div><div class="cook-footer"><span class="stars">★ 5.0 (12)</span><span class="price-lbl">R$20/uni</span></div></div></div>
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👨‍🍳</div><div class="cook-body"><div class="cook-name">Roberto Santos</div><div class="cook-loc">📍 Afogados</div><div class="cook-tags"><span class="tag tag-g">Manutenção</span><span class="tag">Proteico</span></div><div class="cook-footer"><span class="stars">★ 4.6 (44)</span><span class="price-lbl">R$16/uni</span></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 7 — CONFIRMAR PEDIDO
+════════════════════════════════════════ -->
+<div class="screen" id="s-confirmar">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-cozinheiros')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Confirmar Pedido</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body" style="background:var(--beige)">
+    <div class="form-wrap">
+      <div class="card" style="margin-bottom:1.1rem">
+        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Cozinheiro selecionado</div>
+        <div style="display:flex;gap:11px;align-items:center"><div style="font-size:28px">👩‍🍳</div><div><div style="font-weight:600;font-size:15px">Ana Paula</div><div style="font-size:12px;color:var(--text-l)">📍 Boa Viagem · ★ 4.9</div></div></div>
+      </div>
+      <div class="card" style="margin-bottom:1.1rem">
+        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Sua receita</div>
+        <div class="receita-box" style="margin-bottom:0"><div class="receita-lbl">Plano enviado</div>Foto da prescrição · Low carb · Sem glúten · 5 refeições/dia</div>
+      </div>
+      <div class="card" style="margin-bottom:1.1rem">
+        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.7rem">Resumo</div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:.35rem 0;border-bottom:1px solid var(--beige-d)"><span style="color:var(--text-m)">Marmitas</span><span style="font-weight:500">5 dias × 1 = 5 unidades</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:.35rem 0;border-bottom:1px solid var(--beige-d)"><span style="color:var(--text-m)">Valor</span><span style="font-weight:500">R$ 18,00/unidade</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;padding:.35rem 0;border-bottom:1px solid var(--beige-d)"><span style="color:var(--text-m)">Entrega</span><span style="font-weight:500">R$ 8,00</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;padding:.5rem 0;font-weight:700"><span>Total</span><span style="color:var(--green-d)">R$ 98,00</span></div>
+      </div>
+      <div class="card" style="margin-bottom:1.3rem">
+        <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.7rem">Pagamento</div>
+        <div style="display:flex;gap:7px;margin-bottom:.6rem">
+          <div style="flex:1;border:2px solid var(--green);border-radius:10px;padding:.65rem;text-align:center;background:var(--green-l);cursor:pointer"><div style="font-size:18px">💚</div><div style="font-size:11px;font-weight:600;color:var(--green-d)">PIX</div></div>
+          <div style="flex:1;border:2px solid var(--beige-mid);border-radius:10px;padding:.65rem;text-align:center;background:var(--white);cursor:pointer"><div style="font-size:18px">💳</div><div style="font-size:11px;color:var(--text-m)">Cartão</div></div>
+          <div style="flex:1;border:2px solid var(--beige-mid);border-radius:10px;padding:.65rem;text-align:center;background:var(--white);cursor:pointer"><div style="font-size:18px">💬</div><div style="font-size:11px;color:var(--text-m)">WhatsApp</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-l);text-align:center">Pagamento simulado — MVP acadêmico</div>
+      </div>
+      <button class="btn-primary" style="width:100%;padding:13px" onclick="go('s-status')">Confirmar pedido · R$ 98,00</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 8 — STATUS DO PEDIDO
+════════════════════════════════════════ -->
+<div class="screen" id="s-status">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Início</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Pedido #0042</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div style="text-align:center;padding:1.4rem 1rem;background:linear-gradient(135deg,var(--green-l),var(--beige));border-radius:var(--radius-l);margin-bottom:1.1rem">
+        <div style="font-size:46px;margin-bottom:.4rem">🍱</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--green-d);margin-bottom:.25rem">Em preparo</div>
+        <div style="font-size:13px;color:var(--text-m)">Ana Paula está preparando suas marmitas</div>
+        <div style="font-size:12px;color:var(--text-l);margin-top:.3rem">Previsão: hoje às 18h00</div>
+      </div>
+      <div class="card" style="margin-bottom:1.1rem">
+        <div style="font-size:11px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.9rem">Acompanhamento</div>
+        <div style="position:relative;padding-left:26px">
+          <div style="position:absolute;left:7px;top:0;bottom:0;width:2px;background:var(--beige-d)"></div>
+          <div style="position:relative;margin-bottom:14px"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px #fff,0 0 0 3px var(--green)"></div><div style="font-size:13px;font-weight:600">Pedido recebido</div><div style="font-size:11px;color:var(--text-l)">Hoje, 12h30</div></div>
+          <div style="position:relative;margin-bottom:14px"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px #fff,0 0 0 3px var(--green)"></div><div style="font-size:13px;font-weight:600">Cozinheiro aceitou</div><div style="font-size:11px;color:var(--text-l)">Hoje, 12h45</div></div>
+          <div style="position:relative;margin-bottom:14px"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--green-mid);box-shadow:0 0 0 2px #fff,0 0 0 3px var(--green-mid)"></div><div style="font-size:13px;font-weight:600;color:var(--green-d)">Em preparo ← agora</div><div style="font-size:11px;color:var(--text-l)">Hoje, 14h00</div></div>
+          <div style="position:relative;margin-bottom:14px;opacity:.35"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--beige-mid)"></div><div style="font-size:13px">Pronto para entrega</div><div style="font-size:11px;color:var(--text-l)">Previsto: 17h00</div></div>
+          <div style="position:relative;opacity:.35"><div style="position:absolute;left:-22px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--beige-mid)"></div><div style="font-size:13px">Entregue</div><div style="font-size:11px;color:var(--text-l)">Previsto: 18h00</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:11px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.7rem">Detalhes</div>
+        <div style="font-size:13px;color:var(--text-m);line-height:2">
+          <div style="display:flex;justify-content:space-between"><span>Cozinheiro</span><span style="font-weight:500">Ana Paula</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Marmitas</span><span style="font-weight:500">5 unidades</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Plano</span><span style="font-weight:500">Low carb · 5 dias</span></div>
+          <div style="display:flex;justify-content:space-between"><span>Total</span><span style="font-weight:600;color:var(--green-d)">R$ 98,00</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 9 — PAINEL COZINHEIRO
+════════════════════════════════════════ -->
+<div class="screen" id="s-painel-cook">
+  <nav class="topnav">
+    <div class="logo-mark"><svg class="logo-svg"><use href="#ns-logo"/></svg><div><div class="logo-name">NutriSync</div><div class="logo-tag">painel do cozinheiro</div></div></div>
+    <div class="avatar" style="background:#fff3cc;color:#7a4f00">A</div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div style="display:flex;gap:9px;margin-bottom:1.1rem">
+        <div style="flex:1;background:var(--white);border:1px solid var(--beige-d);border-radius:var(--radius);padding:.85rem;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--green-d)">3</div><div style="font-size:11px;color:var(--text-l)">Novos</div></div>
+        <div style="flex:1;background:var(--white);border:1px solid var(--beige-d);border-radius:var(--radius);padding:.85rem;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--brown-btn)">2</div><div style="font-size:11px;color:var(--text-l)">Em preparo</div></div>
+        <div style="flex:1;background:var(--white);border:1px solid var(--beige-d);border-radius:var(--radius);padding:.85rem;text-align:center"><div style="font-size:18px;font-weight:700;color:var(--text)">R$312</div><div style="font-size:11px;color:var(--text-l)">Esta semana</div></div>
+      </div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:.7rem">Novos pedidos</div>
+      <!-- PEDIDO NOVO 1 -->
+      <div class="pedido-card">
+        <div class="pedido-header"><div><div class="pedido-id">Pedido #0043 · agora</div><div class="pedido-user">Maria Silva</div></div><span class="pbadge pbadge-new">Novo</span></div>
+        <div class="pedido-info">5 marmitas · Low carb · Sem glúten · 5 dias</div>
+        <div class="receita-box"><div class="receita-lbl">Receita do nutricionista</div>Foto da prescrição enviada. Plano low carb, 1.600 kcal/dia. Sem lactose e sem glúten. Nutricionista: Dr. João Alves.</div>
+        <div class="pedido-actions"><button class="btn-accept" onclick="this.closest('.pedido-card').style.opacity='.45'">✓ Aceitar — R$ 90,00</button><button class="btn-reject">Recusar</button></div>
+      </div>
+      <!-- PEDIDO NOVO 2 -->
+      <div class="pedido-card">
+        <div class="pedido-header"><div><div class="pedido-id">Pedido #0041 · há 2h</div><div class="pedido-user">Pedro Costa</div></div><span class="pbadge pbadge-new">Novo</span></div>
+        <div class="pedido-info">7 marmitas · Hipertrofia · 7 dias</div>
+        <div class="receita-box"><div class="receita-lbl">Formulário preenchido</div>Objetivo: ganho de massa. 3.000 kcal/dia, alto proteico. Sem amendoim. 3 refeições + 2 lanches.</div>
+        <div class="pedido-actions"><button class="btn-accept">✓ Aceitar — R$ 154,00</button><button class="btn-reject">Recusar</button></div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-weight:600;font-size:14px;margin-bottom:.7rem">Em preparo</div>
+      <div class="pedido-card">
+        <div class="pedido-header"><div><div class="pedido-id">Pedido #0042 · aceito às 14h</div><div class="pedido-user">Ana Beatriz</div></div><span class="pbadge pbadge-prep">Em preparo</span></div>
+        <div class="pedido-info">5 marmitas · Emagrecimento · 5 dias</div>
+        <div style="display:flex;gap:7px">
+          <button style="flex:1;background:var(--brown-btn);color:#fff;border:none;padding:9px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer">Marcar como pronto</button>
+          <button style="flex:1;background:transparent;color:var(--text-m);border:1.5px solid var(--beige-mid);padding:9px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer">Ver receita</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="bnav-btn on"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Pedidos</span></button>
+    <button class="bnav-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span>Histórico</span></button>
+    <button class="bnav-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Perfil</span></button>
+  </nav>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 10 — MEUS PEDIDOS
+════════════════════════════════════════ -->
+<div class="screen" id="s-pedidos">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Meus Pedidos</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div class="pedido-card" onclick="go('s-status')" style="cursor:pointer"><div class="pedido-header"><div><div class="pedido-id">Pedido #0042 · hoje</div><div class="pedido-user">Ana Paula</div></div><span class="pbadge pbadge-prep">Em preparo</span></div><div class="pedido-info">5 marmitas · Low carb · R$ 98,00</div></div>
+      <div class="pedido-card" onclick="go('s-avaliacao')" style="cursor:pointer"><div class="pedido-header"><div><div class="pedido-id">Pedido #0040 · há 1 semana</div><div class="pedido-user">Ana Paula</div></div><span class="pbadge pbadge-done">Entregue</span></div><div class="pedido-info">5 marmitas · Low carb · R$ 98,00 · <span style="color:var(--green);font-weight:500">Avaliar →</span></div></div>
+      <div class="pedido-card"><div class="pedido-header"><div><div class="pedido-id">Pedido #0037 · há 2 semanas</div><div class="pedido-user">Carlos Melo</div></div><span class="pbadge pbadge-done">Entregue</span></div><div class="pedido-info">7 marmitas · Hipertrofia · R$ 154,00 · ★ 4 avaliado</div></div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="bnav-btn" onclick="go('s-home-user')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Início</span></button>
+    <button class="bnav-btn" onclick="go('s-cozinheiros')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></button>
+    <button class="bnav-btn on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><span>Pedidos</span></button>
+    <button class="bnav-btn" onclick="go('s-perfil')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Perfil</span></button>
+  </nav>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 11 — AVALIAÇÃO
+════════════════════════════════════════ -->
+<div class="screen" id="s-avaliacao">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-pedidos')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Avaliar pedido</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body" style="background:var(--beige)">
+    <div class="form-wrap">
+      <div style="text-align:center;margin-bottom:1.4rem"><div style="font-size:46px;margin-bottom:.4rem">🎉</div><div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;margin-bottom:.25rem">Pedido entregue!</div><div style="font-size:13px;color:var(--text-l)">Como foram suas marmitas?</div></div>
+      <div class="card" style="margin-bottom:1.1rem">
+        <div style="display:flex;gap:11px;align-items:center;margin-bottom:.9rem"><div style="font-size:30px">👩‍🍳</div><div><div style="font-weight:600">Ana Paula</div><div style="font-size:12px;color:var(--text-l)">Pedido #0040 · 5 marmitas</div></div></div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:.35rem">Nota geral</div>
+        <div id="stars" style="display:flex;gap:5px;margin-bottom:.7rem">
+          <span onclick="setStar(1)" style="font-size:24px;cursor:pointer">⭐</span>
+          <span onclick="setStar(2)" style="font-size:24px;cursor:pointer">⭐</span>
+          <span onclick="setStar(3)" style="font-size:24px;cursor:pointer">⭐</span>
+          <span onclick="setStar(4)" style="font-size:24px;cursor:pointer">⭐</span>
+          <span onclick="setStar(5)" style="font-size:24px;cursor:pointer;filter:grayscale(1)">⭐</span>
+        </div>
+      </div>
+      <div class="field"><label>O cozinheiro seguiu a receita?</label><select><option>Sim, perfeitamente</option><option>Sim, com pequenas diferenças</option><option>Não seguiu corretamente</option></select></div>
+      <div class="field"><label>Como estava o sabor?</label><select><option>Ótimo</option><option>Bom</option><option>Regular</option><option>Ruim</option></select></div>
+      <div class="field"><label>Comentário (opcional)</label><textarea placeholder="Conte como foi a experiência..."></textarea></div>
+      <button class="btn-primary" style="width:100%;padding:13px" onclick="go('s-home-user')">Enviar avaliação</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 12 — PERFIL CLIENTE
+════════════════════════════════════════ -->
+<div class="screen" id="s-perfil">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Meu Perfil</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body">
+    <div style="background:linear-gradient(160deg,var(--green-l),var(--beige));padding:1.8rem 1.3rem;text-align:center;border-bottom:1px solid var(--beige-d)">
+      <div class="avatar" style="width:60px;height:60px;font-size:24px;margin:0 auto .7rem">M</div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700">Maria Silva</div>
+      <div style="font-size:12px;color:var(--text-l)">maria@email.com · (81) 99999-9999</div>
+      <div style="display:flex;gap:5px;justify-content:center;margin-top:.7rem"><span class="chip">Emagrecer</span><span class="chip">Sem lactose</span></div>
+    </div>
+    <div class="section">
+      <div class="card" style="margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.7rem">Resumo</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center">
+          <div><div style="font-size:20px;font-weight:700;color:var(--green-d)">8</div><div style="font-size:11px;color:var(--text-l)">Pedidos</div></div>
+          <div><div style="font-size:20px;font-weight:700;color:var(--green-d)">3</div><div style="font-size:11px;color:var(--text-l)">Cozinheiros</div></div>
+          <div><div style="font-size:20px;font-weight:700;color:var(--green-d)">★4.8</div><div style="font-size:11px;color:var(--text-l)">Média rec.</div></div>
+        </div>
+      </div>
+      <div class="card" style="cursor:pointer" onclick="go('s-pedidos')"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:500;font-size:14px">Meus pedidos</span><span style="color:var(--text-l)">→</span></div></div>
+      <div class="card" style="cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:500;font-size:14px">Editar perfil e restrições</span><span style="color:var(--text-l)">→</span></div></div>
+      <div class="card" style="cursor:pointer"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:500;font-size:14px">Minhas receitas enviadas</span><span style="color:var(--text-l)">→</span></div></div>
+      <button class="btn-secondary" style="width:100%;margin-top:.4rem" onclick="go('s-home')">Sair</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TELA 13 — CARDÁPIOS SUGERIDOS
+════════════════════════════════════════ -->
+<div class="screen" id="s-sem-receita">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Cardápios sugeridos</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div style="font-size:13px;color:var(--text-m);margin-bottom:1.1rem;background:var(--green-l);padding:.75rem 1rem;border-radius:10px;border-left:3px solid var(--green)">Escolha um plano padrão — cozinheiros parceiros preparam tudo para você, mesmo sem receita de nutricionista.</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card" style="cursor:pointer;border:2px solid var(--green)" onclick="go('s-cozinheiros')"><div style="display:flex;gap:13px;align-items:center"><div style="font-size:34px">🥗</div><div style="flex:1"><div style="font-weight:700;font-size:14px;margin-bottom:1px">Emagrecimento</div><div style="font-size:12px;color:var(--text-l);margin-bottom:.35rem">1.400–1.600 kcal · baixo carbo · alto proteico</div><div style="display:flex;gap:4px"><span class="tag tag-g">Low carb</span><span class="tag">5 refeições/dia</span></div></div><span style="color:var(--green);font-size:18px">→</span></div></div>
+        <div class="card" style="cursor:pointer" onclick="go('s-cozinheiros')"><div style="display:flex;gap:13px;align-items:center"><div style="font-size:34px">💪</div><div style="flex:1"><div style="font-weight:700;font-size:14px;margin-bottom:1px">Hipertrofia</div><div style="font-size:12px;color:var(--text-l);margin-bottom:.35rem">2.800–3.200 kcal · alto proteico · rico em carbos</div><div style="display:flex;gap:4px"><span class="tag tag-g">Alto proteico</span><span class="tag">6 refeições/dia</span></div></div><span style="color:var(--green);font-size:18px">→</span></div></div>
+        <div class="card" style="cursor:pointer" onclick="go('s-cozinheiros')"><div style="display:flex;gap:13px;align-items:center"><div style="font-size:34px">⚖️</div><div style="flex:1"><div style="font-weight:700;font-size:14px;margin-bottom:1px">Manutenção</div><div style="font-size:12px;color:var(--text-l);margin-bottom:.35rem">2.000–2.200 kcal · equilibrado · variado</div><div style="display:flex;gap:4px"><span class="tag tag-g">Equilibrado</span><span class="tag">5 refeições/dia</span></div></div><span style="color:var(--green);font-size:18px">→</span></div></div>
+        <div class="card" style="cursor:pointer" onclick="go('s-cozinheiros')"><div style="display:flex;gap:13px;align-items:center"><div style="font-size:34px">🌱</div><div style="flex:1"><div style="font-weight:700;font-size:14px;margin-bottom:1px">Vegano saudável</div><div style="font-size:12px;color:var(--text-l);margin-bottom:.35rem">1.800 kcal · 100% vegetal · nutritivo</div><div style="display:flex;gap:4px"><span class="tag tag-g">Vegano</span><span class="tag">Sem animal</span></div></div><span style="color:var(--green);font-size:18px">→</span></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  OVERLAY — PERFIL COZINHEIRO
+════════════════════════════════════════ -->
+<div class="overlay" id="ov-cook" onclick="closeOverlay('ov-cook')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:.9rem">
+      <div style="font-size:50px;margin-bottom:.35rem">👩‍🍳</div>
+      <div class="modal-title">Ana Paula</div>
+      <div style="font-size:12px;color:var(--text-l)">📍 Boa Viagem, Recife · ★ 4.9 (38 avaliações)</div>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:.9rem"><span class="chip">Low carb</span><span class="chip">Sem glúten</span><span class="chip">Sem lactose</span><span class="chip">Diabéticos</span></div>
+    <div class="receita-box" style="margin-bottom:.9rem"><div class="receita-lbl">Sobre mim</div>Cozinheira especializada em alimentação saudável há 4 anos. Trabalho com receitas de nutricionistas e garanto gramatura exata. Aceito prescrições e cardápios personalizados.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;text-align:center;margin-bottom:1.1rem">
+      <div style="background:var(--beige);border-radius:9px;padding:.65rem"><div style="font-weight:700;font-size:15px;color:var(--green-d)">38</div><div style="font-size:11px;color:var(--text-l)">pedidos</div></div>
+      <div style="background:var(--beige);border-radius:9px;padding:.65rem"><div style="font-weight:700;font-size:15px;color:var(--green-d)">4.9★</div><div style="font-size:11px;color:var(--text-l)">avaliação</div></div>
+      <div style="background:var(--beige);border-radius:9px;padding:.65rem"><div style="font-weight:700;font-size:15px;color:var(--green-d)">R$18</div><div style="font-size:11px;color:var(--text-l)">por marmita</div></div>
+    </div>
+    <button class="btn-primary" style="width:100%;padding:12px" onclick="closeOverlay('ov-cook');go('s-confirmar')">Escolher Ana Paula</button>
+    <button class="btn-secondary" style="width:100%;padding:10px;margin-top:7px" onclick="closeOverlay('ov-cook')">Voltar</button>
+  </div>
+</div>
+
+<!-- DEMO NAV FAB -->
+<button class="demo-fab" onclick="document.getElementById('dmenu').classList.toggle('open')">☰</button>
+<div class="demo-panel" id="dmenu">
+  <div class="demo-panel-hd">Navegar entre telas</div>
+  <div class="demo-panel-body">
+    <button class="dbtn" onclick="nav('s-home')">🏠 Landing page</button>
+    <button class="dbtn" onclick="nav('s-cadastro')">📝 Cadastro</button>
+    <button class="dbtn" onclick="nav('s-login')">🔑 Login</button>
+    <button class="dbtn" onclick="nav('s-home-user')">👤 Home cliente</button>
+    <button class="dbtn" onclick="nav('s-enviar-receita')">📷 Enviar receita</button>
+    <button class="dbtn" onclick="nav('s-cozinheiros')">🔍 Marketplace</button>
+    <button class="dbtn" onclick="nav('s-confirmar')">🛒 Confirmar pedido</button>
+    <button class="dbtn" onclick="nav('s-status')">📦 Status do pedido</button>
+    <button class="dbtn" onclick="nav('s-pedidos')">📋 Meus pedidos</button>
+    <button class="dbtn" onclick="nav('s-avaliacao')">⭐ Avaliação</button>
+    <button class="dbtn" onclick="nav('s-perfil')">👤 Perfil</button>
+    <button class="dbtn" onclick="nav('s-sem-receita')">🥗 Cardápios sugeridos</button>
+    <button class="dbtn" onclick="nav('s-painel-cook')">👨‍🍳 Painel cozinheiro</button>
+  </div>
+</div>
+
+<script>
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById(id);
+  if(el){el.classList.add('active');el.scrollTop=0;window.scrollTo(0,0);}
+  document.getElementById('dmenu').classList.remove('open');
+}
+function nav(id){go(id);}
+function openOverlay(id){document.getElementById(id).classList.add('open');}
+function closeOverlay(id){document.getElementById(id).classList.remove('open');}
+function selTipo(t){
+  // Estilo dos cartões de seleção
+  const elU=document.getElementById('tp-u');
+  const elC=document.getElementById('tp-c');
+  elU.style.border=t==='u'?'2px solid var(--green)':'2px solid var(--beige-mid)';
+  elU.style.background=t==='u'?'var(--green-l)':'var(--white)';
+  elC.style.border=t==='c'?'2px solid var(--green)':'2px solid var(--beige-mid)';
+  elC.style.background=t==='c'?'var(--green-l)':'var(--white)';
+  // Mostrar seção correta
+  document.getElementById('sec-cliente').style.display=t==='u'?'block':'none';
+  document.getElementById('sec-cozinheiro').style.display=t==='c'?'block':'none';
+}
+function selLogin(t){
+  const su={borderColor:'var(--green)',background:'var(--green-l)'};
+  const su2={borderColor:'var(--beige-mid)',background:'var(--white)'};
+  Object.assign(document.getElementById('lt-u').style,t==='u'?su:su2);
+  Object.assign(document.getElementById('lt-c').style,t==='c'?su:su2);
+}
+function selOp(t){
+  document.getElementById('op-foto').style.borderColor=t==='foto'?'var(--green)':'var(--beige-mid)';
+  document.getElementById('op-foto').style.background=t==='foto'?'var(--green-l)':'var(--white)';
+  document.getElementById('op-form').style.borderColor=t==='form'?'var(--green)':'var(--beige-mid)';
+  document.getElementById('op-form').style.background=t==='form'?'var(--green-l)':'var(--white)';
+  document.getElementById('area-foto').style.display=t==='foto'?'block':'none';
+  document.getElementById('area-form').style.display=t==='form'?'block':'none';
+}
+function setStar(n){
+  document.querySelectorAll('#stars span').forEach((s,i)=>{s.style.filter=i<n?'none':'grayscale(1)';});
+}
+</script>
+</body>
+</html>

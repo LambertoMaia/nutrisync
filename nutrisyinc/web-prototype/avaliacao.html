@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSync — Avaliação</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ns-logo" viewBox="0 0 38 38">
+    <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
+    <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
+    <line x1="14" y1="9" x2="14" y2="20" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="14" y1="9" x2="16" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M22 7 C24 9 28 11 27 17 C25 15 21 13 22 7Z" fill="#a8d878"/>
+    <line x1="22" y1="7" x2="25.5" y2="15" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="screen active" id="s-avaliacao">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-pedidos')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Avaliar pedido</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body" style="background:var(--beige)">
+    <div class="form-wrap">
+      <div style="text-align:center;margin-bottom:1.4rem"><div style="font-size:46px;margin-bottom:.4rem">🎉</div><div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;margin-bottom:.25rem">Pedido entregue!</div><div style="font-size:13px;color:var(--text-l)">Como foram suas marmitas?</div></div>
+      <div class="card" style="margin-bottom:1.1rem">
+        <div style="display:flex;gap:11px;align-items:center;margin-bottom:.9rem"><div style="font-size:30px">👩‍🍳</div><div><div style="font-weight:600">Ana Paula</div><div style="font-size:12px;color:var(--text-l)">Pedido #0040 · 5 marmitas</div></div></div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:.35rem">Nota geral</div>
+        <div id="stars" style="display:flex;gap:5px;margin-bottom:.7rem">
+          <span onclick="setStar(1)" style="font-size:24px;cursor:pointer">⭐</span>
+          <span onclick="setStar(2)" style="font-size:24px;cursor:pointer">⭐</span>
+          <span onclick="setStar(3)" style="font-size:24px;cursor:pointer">⭐</span>
+          <span onclick="setStar(4)" style="font-size:24px;cursor:pointer">⭐</span>
+          <span onclick="setStar(5)" style="font-size:24px;cursor:pointer;filter:grayscale(1)">⭐</span>
+        </div>
+      </div>
+      <div class="field"><label>O cozinheiro seguiu a receita?</label><select><option>Sim, perfeitamente</option><option>Sim, com pequenas diferenças</option><option>Não seguiu corretamente</option></select></div>
+      <div class="field"><label>Como estava o sabor?</label><select><option>Ótimo</option><option>Bom</option><option>Regular</option><option>Ruim</option></select></div>
+      <div class="field"><label>Comentário (opcional)</label><textarea placeholder="Conte como foi a experiência..."></textarea></div>
+      <button class="btn-primary" style="width:100%;padding:13px" onclick="go('s-home-user')">Enviar avaliação</button>
+    </div>
+  </div>
+</div>
+
+<button class="demo-fab" onclick="document.getElementById('dmenu').classList.toggle('open')">☰</button>
+<div class="demo-panel" id="dmenu">
+  <div class="demo-panel-hd">Navegar entre telas</div>
+  <div class="demo-panel-body">
+    <button class="dbtn" onclick="nav('s-home')">🏠 Landing page</button>
+    <button class="dbtn" onclick="nav('s-cadastro')">📝 Cadastro</button>
+    <button class="dbtn" onclick="nav('s-login')">🔑 Login</button>
+    <button class="dbtn" onclick="nav('s-home-user')">👤 Home cliente</button>
+    <button class="dbtn" onclick="nav('s-enviar-receita')">📷 Enviar receita</button>
+    <button class="dbtn" onclick="nav('s-cozinheiros')">🔍 Marketplace</button>
+    <button class="dbtn" onclick="nav('s-confirmar')">🛒 Confirmar pedido</button>
+    <button class="dbtn" onclick="nav('s-status')">📦 Status do pedido</button>
+    <button class="dbtn" onclick="nav('s-pedidos')">📋 Meus pedidos</button>
+    <button class="dbtn" onclick="nav('s-avaliacao')">⭐ Avaliação</button>
+    <button class="dbtn" onclick="nav('s-perfil')">👤 Perfil</button>
+    <button class="dbtn" onclick="nav('s-sem-receita')">🥗 Cardápios sugeridos</button>
+    <button class="dbtn" onclick="nav('s-painel-cook')">👨‍🍳 Painel cozinheiro</button>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>

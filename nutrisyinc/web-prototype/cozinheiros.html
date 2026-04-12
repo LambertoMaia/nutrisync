@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSync — Cozinheiros</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ns-logo" viewBox="0 0 38 38">
+    <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
+    <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
+    <line x1="14" y1="9" x2="14" y2="20" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="14" y1="9" x2="16" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M22 7 C24 9 28 11 27 17 C25 15 21 13 22 7Z" fill="#a8d878"/>
+    <line x1="22" y1="7" x2="25.5" y2="15" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="screen active" id="s-cozinheiros">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Cozinheiros</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div style="position:relative;margin-bottom:.7rem">
+        <input type="text" placeholder="Buscar por especialidade, bairro..." style="width:100%;padding:10px 13px 10px 36px;border:1.5px solid var(--beige-mid);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--white);outline:none"/>
+        <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%)" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8a7a65" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </div>
+      <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:.3rem;margin-bottom:1rem">
+        <span class="chip" style="cursor:pointer;white-space:nowrap">Todos</span>
+        <span style="display:inline-flex;border:1px solid var(--beige-mid);color:var(--text-m);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;cursor:pointer;background:var(--white)">Low carb</span>
+        <span style="display:inline-flex;border:1px solid var(--beige-mid);color:var(--text-m);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;cursor:pointer;background:var(--white)">Hipertrofia</span>
+        <span style="display:inline-flex;border:1px solid var(--beige-mid);color:var(--text-m);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;cursor:pointer;background:var(--white)">Vegano</span>
+        <span style="display:inline-flex;border:1px solid var(--beige-mid);color:var(--text-m);font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;cursor:pointer;background:var(--white)">Sem glúten</span>
+      </div>
+      <div class="cook-grid">
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👩‍🍳</div><div class="cook-body"><div class="cook-name">Ana Paula</div><div class="cook-loc">📍 Boa Viagem</div><div class="cook-tags"><span class="tag tag-g">Low carb</span><span class="tag">Sem glúten</span></div><div class="cook-footer"><span class="stars">★ 4.9 (38)</span><span class="price-lbl">R$18/uni</span></div></div></div>
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👨‍🍳</div><div class="cook-body"><div class="cook-name">Carlos Melo</div><div class="cook-loc">📍 Casa Amarela</div><div class="cook-tags"><span class="tag tag-g">Hipertrofia</span><span class="tag">Vegano</span></div><div class="cook-footer"><span class="stars">★ 4.7 (21)</span><span class="price-lbl">R$22/uni</span></div></div></div>
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👩‍🍳</div><div class="cook-body"><div class="cook-name">Fernanda Lima</div><div class="cook-loc">📍 Graças</div><div class="cook-tags"><span class="tag tag-g">Emagrecimento</span><span class="tag">Diabéticos</span></div><div class="cook-footer"><span class="stars">★ 5.0 (12)</span><span class="price-lbl">R$20/uni</span></div></div></div>
+        <div class="cook-card" onclick="openOverlay('ov-cook')"><div class="cook-img">👨‍🍳</div><div class="cook-body"><div class="cook-name">Roberto Santos</div><div class="cook-loc">📍 Afogados</div><div class="cook-tags"><span class="tag tag-g">Manutenção</span><span class="tag">Proteico</span></div><div class="cook-footer"><span class="stars">★ 4.6 (44)</span><span class="price-lbl">R$16/uni</span></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY — PERFIL COZINHEIRO -->
+<div class="overlay" id="ov-cook" onclick="closeOverlay('ov-cook')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:.9rem">
+      <div style="font-size:50px;margin-bottom:.35rem">👩‍🍳</div>
+      <div class="modal-title">Ana Paula</div>
+      <div style="font-size:12px;color:var(--text-l)">📍 Boa Viagem, Recife · ★ 4.9 (38 avaliações)</div>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:.9rem"><span class="chip">Low carb</span><span class="chip">Sem glúten</span><span class="chip">Sem lactose</span><span class="chip">Diabéticos</span></div>
+    <div class="receita-box" style="margin-bottom:.9rem"><div class="receita-lbl">Sobre mim</div>Cozinheira especializada em alimentação saudável há 4 anos. Trabalho com receitas de nutricionistas e garanto gramatura exata. Aceito prescrições e cardápios personalizados.</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;text-align:center;margin-bottom:1.1rem">
+      <div style="background:var(--beige);border-radius:9px;padding:.65rem"><div style="font-weight:700;font-size:15px;color:var(--green-d)">38</div><div style="font-size:11px;color:var(--text-l)">pedidos</div></div>
+      <div style="background:var(--beige);border-radius:9px;padding:.65rem"><div style="font-weight:700;font-size:15px;color:var(--green-d)">4.9★</div><div style="font-size:11px;color:var(--text-l)">avaliação</div></div>
+      <div style="background:var(--beige);border-radius:9px;padding:.65rem"><div style="font-weight:700;font-size:15px;color:var(--green-d)">R$18</div><div style="font-size:11px;color:var(--text-l)">por marmita</div></div>
+    </div>
+    <button class="btn-primary" style="width:100%;padding:12px" onclick="closeOverlay('ov-cook');go('s-confirmar')">Escolher Ana Paula</button>
+    <button class="btn-secondary" style="width:100%;padding:10px;margin-top:7px" onclick="closeOverlay('ov-cook')">Voltar</button>
+  </div>
+</div>
+
+<button class="demo-fab" onclick="document.getElementById('dmenu').classList.toggle('open')">☰</button>
+<div class="demo-panel" id="dmenu">
+  <div class="demo-panel-hd">Navegar entre telas</div>
+  <div class="demo-panel-body">
+    <button class="dbtn" onclick="nav('s-home')">🏠 Landing page</button>
+    <button class="dbtn" onclick="nav('s-cadastro')">📝 Cadastro</button>
+    <button class="dbtn" onclick="nav('s-login')">🔑 Login</button>
+    <button class="dbtn" onclick="nav('s-home-user')">👤 Home cliente</button>
+    <button class="dbtn" onclick="nav('s-enviar-receita')">📷 Enviar receita</button>
+    <button class="dbtn" onclick="nav('s-cozinheiros')">🔍 Marketplace</button>
+    <button class="dbtn" onclick="nav('s-confirmar')">🛒 Confirmar pedido</button>
+    <button class="dbtn" onclick="nav('s-status')">📦 Status do pedido</button>
+    <button class="dbtn" onclick="nav('s-pedidos')">📋 Meus pedidos</button>
+    <button class="dbtn" onclick="nav('s-avaliacao')">⭐ Avaliação</button>
+    <button class="dbtn" onclick="nav('s-perfil')">👤 Perfil</button>
+    <button class="dbtn" onclick="nav('s-sem-receita')">🥗 Cardápios sugeridos</button>
+    <button class="dbtn" onclick="nav('s-painel-cook')">👨‍🍳 Painel cozinheiro</button>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>

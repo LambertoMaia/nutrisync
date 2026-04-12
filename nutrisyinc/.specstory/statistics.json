@@ -1,0 +1,22 @@
+{
+  "sessions": {
+    "527b3da2-ae0d-4be6-a5b8-9a3bed6eef42": {
+      "user_message_count": 5,
+      "agent_message_count": 33,
+      "start_timestamp": "2026-04-12T20:36:36.361Z",
+      "end_timestamp": "2026-04-12T20:45:45.115Z",
+      "markdown_size_bytes": 102045,
+      "provider": "gemini-cli",
+      "last_updated": "2026-04-12T20:45:46Z"
+    },
+    "b62ff43a-c09f-49e8-a1e6-3bce7a0d18b5": {
+      "user_message_count": 4,
+      "agent_message_count": 47,
+      "start_timestamp": "2026-04-12T17:37:13-03:00",
+      "end_timestamp": "2026-04-12T17:37:13-03:00",
+      "markdown_size_bytes": 24223,
+      "provider": "cursoride",
+      "last_updated": "2026-04-12T20:51:51Z"
+    }
+  }
+}

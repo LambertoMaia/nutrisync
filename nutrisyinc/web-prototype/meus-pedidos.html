@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NutriSync — Meus Pedidos</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="ns-logo" viewBox="0 0 38 38">
+    <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
+    <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
+    <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
+    <line x1="14" y1="9" x2="14" y2="20" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+    <line x1="12" y1="9" x2="12" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <line x1="14" y1="9" x2="16" y2="13" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/>
+    <path d="M22 7 C24 9 28 11 27 17 C25 15 21 13 22 7Z" fill="#a8d878"/>
+    <line x1="22" y1="7" x2="25.5" y2="15" stroke="#fff" stroke-width=".9" stroke-linecap="round"/>
+  </symbol>
+</svg>
+
+<div class="screen active" id="s-pedidos">
+  <nav class="topnav">
+    <button class="btn-nav btn-ghost" onclick="go('s-home-user')" style="padding:8px 10px">← Voltar</button>
+    <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">Meus Pedidos</div>
+    <div style="width:70px"></div>
+  </nav>
+  <div class="scroll-body">
+    <div class="section">
+      <div class="pedido-card" onclick="go('s-status')" style="cursor:pointer"><div class="pedido-header"><div><div class="pedido-id">Pedido #0042 · hoje</div><div class="pedido-user">Ana Paula</div></div><span class="pbadge pbadge-prep">Em preparo</span></div><div class="pedido-info">5 marmitas · Low carb · R$ 98,00</div></div>
+      <div class="pedido-card" onclick="go('s-avaliacao')" style="cursor:pointer"><div class="pedido-header"><div><div class="pedido-id">Pedido #0040 · há 1 semana</div><div class="pedido-user">Ana Paula</div></div><span class="pbadge pbadge-done">Entregue</span></div><div class="pedido-info">5 marmitas · Low carb · R$ 98,00 · <span style="color:var(--green);font-weight:500">Avaliar →</span></div></div>
+      <div class="pedido-card"><div class="pedido-header"><div><div class="pedido-id">Pedido #0037 · há 2 semanas</div><div class="pedido-user">Carlos Melo</div></div><span class="pbadge pbadge-done">Entregue</span></div><div class="pedido-info">7 marmitas · Hipertrofia · R$ 154,00 · ★ 4 avaliado</div></div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+    <button class="bnav-btn" onclick="go('s-home-user')"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Início</span></button>
+    <button class="bnav-btn" onclick="go('s-cozinheiros')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Buscar</span></button>
+    <button class="bnav-btn on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><span>Pedidos</span></button>
+    <button class="bnav-btn" onclick="go('s-perfil')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span>Perfil</span></button>
+  </nav>
+</div>
+
+<button class="demo-fab" onclick="document.getElementById('dmenu').classList.toggle('open')">☰</button>
+<div class="demo-panel" id="dmenu">
+  <div class="demo-panel-hd">Navegar entre telas</div>
+  <div class="demo-panel-body">
+    <button class="dbtn" onclick="nav('s-home')">🏠 Landing page</button>
+    <button class="dbtn" onclick="nav('s-cadastro')">📝 Cadastro</button>
+    <button class="dbtn" onclick="nav('s-login')">🔑 Login</button>
+    <button class="dbtn" onclick="nav('s-home-user')">👤 Home cliente</button>
+    <button class="dbtn" onclick="nav('s-enviar-receita')">📷 Enviar receita</button>
+    <button class="dbtn" onclick="nav('s-cozinheiros')">🔍 Marketplace</button>
+    <button class="dbtn" onclick="nav('s-confirmar')">🛒 Confirmar pedido</button>
+    <button class="dbtn" onclick="nav('s-status')">📦 Status do pedido</button>
+    <button class="dbtn" onclick="nav('s-pedidos')">📋 Meus pedidos</button>
+    <button class="dbtn" onclick="nav('s-avaliacao')">⭐ Avaliação</button>
+    <button class="dbtn" onclick="nav('s-perfil')">👤 Perfil</button>
+    <button class="dbtn" onclick="nav('s-sem-receita')">🥗 Cardápios sugeridos</button>
+    <button class="dbtn" onclick="nav('s-painel-cook')">👨‍🍳 Painel cozinheiro</button>
+  </div>
+</div>
+
+<script src="scripts.js"></script>
+</body>
+</html>
