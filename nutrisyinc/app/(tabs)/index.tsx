@@ -107,11 +107,6 @@ export default function HomeScreen() {
               style={({ pressed }) => [styles.btnPrimary, pressed && styles.pressed]}>
               <Text style={styles.btnPrimaryText}>Quero pedir minhas marmitas</Text>
             </Pressable>
-            <Pressable
-              onPress={() => tap(() => router.push('/explore'))}
-              style={({ pressed }) => [styles.btnSecondary, pressed && styles.pressed]}>
-              <Text style={styles.btnSecondaryText}>Ver cozinheiros</Text>
-            </Pressable>
           </View>
         </View>
 
