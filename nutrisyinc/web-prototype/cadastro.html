@@ -5,7 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>NutriSync — Cadastro</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="/web-prototype/styles.css">
+<style>
+    .error-message {
+        background-color: #fee;
+        border: 1px solid #fcc;
+        color: #c33;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        text-align: center;
+    }
+    .success-message {
+        background-color: #e8f5e9;
+        border: 1px solid #c8e6c9;
+        color: #2e7d32;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        text-align: center;
+    }
+</style>
 </head>
 <body>
 
@@ -35,88 +57,179 @@
       <div class="form-title">Criar conta</div>
       <div class="form-sub">Escolha seu perfil para personalizar o cadastro</div>
 
-      <!-- SELETOR DE TIPO -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:1.3rem">
-        <div id="tp-u" onclick="selTipo('u')" style="border:2px solid var(--green);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;background:var(--green-l)">
-          <div style="font-size:22px;margin-bottom:.3rem">🧑</div>
-          <div style="font-size:13px;font-weight:600;color:var(--green-d)">Sou cliente</div>
-          <div style="font-size:11px;color:var(--text-l)">Quero pedir marmitas</div>
-        </div>
-        <div id="tp-c" onclick="selTipo('c')" style="border:2px solid var(--beige-mid);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;background:var(--white)">
-          <div style="font-size:22px;margin-bottom:.3rem">👨‍🍳</div>
-          <div style="font-size:13px;font-weight:600;color:var(--text)">Sou cozinheiro</div>
-          <div style="font-size:11px;color:var(--text-l)">Quero oferecer marmitas</div>
-        </div>
-      </div>
+      <!-- Mensagens de erro/sucesso -->
+      {% if erro %}
+      <div class="error-message">{{ erro }}</div>
+      {% endif %}
+      {% if sucesso %}
+      <div class="success-message">{{ sucesso }}</div>
+      {% endif %}
 
-      <!-- CAMPOS COMUNS -->
-      <div class="field"><label>Nome completo</label><input type="text" placeholder="Ex: Maria Silva"/></div>
-      <div class="field"><label>E-mail</label><input type="email" placeholder="maria@email.com"/></div>
-      <div class="field"><label>Telefone / WhatsApp</label><input type="tel" placeholder="(81) 99999-9999"/></div>
-      <div class="field"><label>Senha</label><input type="password" placeholder="Mínimo 8 caracteres"/></div>
-      <div class="field"><label>Confirmar senha</label><input type="password" placeholder="Repita a senha"/></div>
+      <!-- FORMULÁRIO PRINCIPAL -->
+      <form method="POST" action="/cadastro" id="form-cadastro">
+        <input type="hidden" name="tipo_cadastro" id="tipo_cadastro" value="cliente">
 
-      <!-- SEÇÃO CLIENTE -->
-      <div id="sec-cliente">
-        <div class="divider"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
-          <div style="width:28px;height:28px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">🎯</div>
-          <div style="font-size:12px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em">Seu objetivo alimentar</div>
-        </div>
-        <div class="field">
-          <label>Objetivo principal</label>
-          <select>
-            <option>Emagrecer</option>
-            <option>Ganhar massa muscular</option>
-            <option>Manutenção do peso</option>
-            <option>Saúde e qualidade de vida</option>
-          </select>
-        </div>
-        <div class="field"><label>Restrições alimentares (opcional)</label><input type="text" placeholder="Ex: sem glúten, sem lactose, sem amendoim"/></div>
-        <div class="field"><label>Bairro para entrega</label><input type="text" placeholder="Ex: Boa Viagem, Recife"/></div>
-        <button class="btn-primary" style="width:100%;margin-top:.4rem;padding:13px" onclick="go('s-enviar-receita')">Criar minha conta</button>
-      </div>
-
-      <!-- SEÇÃO COZINHEIRO -->
-      <div id="sec-cozinheiro" style="display:none">
-        <div class="divider"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
-          <div style="width:28px;height:28px;background:#fff3cc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">🍳</div>
-          <div style="font-size:12px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em">Informações do cozinheiro</div>
-        </div>
-        <div class="field"><label>Bairro / localização</label><input type="text" placeholder="Ex: Boa Viagem, Recife"/></div>
-        <div class="field"><label>Preço por marmita (R$)</label><input type="number" placeholder="Ex: 18" min="5" step="0.5"/></div>
-        <div class="field">
-          <label>Especialidades (selecione todas que se aplicam)</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:.4rem" id="espec-grid">
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Low carb</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Hipertrofia</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Vegano</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Sem glúten</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Sem lactose</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Diabéticos</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Emagrecimento</label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)"><input type="checkbox" style="accent-color:var(--green)"/> Manutenção</label>
+        <!-- SELETOR DE TIPO -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:1.3rem">
+          <div id="tp-u" onclick="selTipo('cliente')" style="border:2px solid var(--green);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;background:var(--green-l)">
+            <div style="font-size:22px;margin-bottom:.3rem">🧑</div>
+            <div style="font-size:13px;font-weight:600;color:var(--green-d)">Sou cliente</div>
+            <div style="font-size:11px;color:var(--text-l)">Quero pedir marmitas</div>
+          </div>
+          <div id="tp-c" onclick="selTipo('cozinheiro')" style="border:2px solid var(--beige-mid);border-radius:12px;padding:.9rem;text-align:center;cursor:pointer;background:var(--white)">
+            <div style="font-size:22px;margin-bottom:.3rem">👨‍🍳</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">Sou cozinheiro</div>
+            <div style="font-size:11px;color:var(--text-l)">Quero oferecer marmitas</div>
           </div>
         </div>
+
+        <!-- CAMPOS COMUNS -->
         <div class="field">
-          <label>Raio de entrega</label>
-          <select>
-            <option>Só meu bairro</option>
-            <option>Até 5 km</option>
-            <option>Até 10 km</option>
-            <option>Toda a cidade</option>
-          </select>
+          <label>Nome completo</label>
+          <input type="text" name="nome" placeholder="Ex: Maria Silva" required/>
         </div>
         <div class="field">
-          <label>Sobre você (aparece no seu perfil público)</label>
-          <textarea placeholder="Ex: Cozinheira especializada em alimentação saudável há 3 anos. Sigo receitas de nutricionistas à risca e garanto gramatura correta..."></textarea>
+          <label>E-mail</label>
+          <input type="email" name="email" placeholder="maria@email.com" required/>
         </div>
-        <div style="background:var(--green-l);border-radius:10px;padding:.85rem;margin-bottom:1rem;font-size:12px;color:var(--green-d);line-height:1.6">
-          <strong>🔒 Verificação posterior:</strong> após o cadastro, nossa equipe entrará em contato via WhatsApp para verificar sua cozinha. Só cozinheiros verificados aparecem no marketplace.
+        <div class="field">
+          <label>Telefone / WhatsApp</label>
+          <input type="tel" name="telefone" placeholder="(81) 99999-9999" required/>
         </div>
-        <button class="btn-primary" style="width:100%;margin-top:.2rem;padding:13px;background:var(--brown-btn)" onclick="go('s-painel-cook')">Cadastrar como cozinheiro</button>
-      </div>
+        <div class="field">
+          <label>Senha</label>
+          <input type="password" name="senha" placeholder="Mínimo 6 caracteres" required/>
+        </div>
+        <div class="field">
+          <label>Confirmar senha</label>
+          <input type="password" name="confirmar_senha" placeholder="Repita a senha" required/>
+        </div>
+
+        <!-- SEÇÃO CLIENTE -->
+        <div id="sec-cliente">
+      
+          <div class="field">
+            <label>Restrições alimentares (opcional)</label>
+            <input type="text" name="restricao" placeholder="Ex: sem glúten, sem lactose, sem amendoim"/>
+          </div>
+          
+          <!-- Endereço do cliente -->
+          <div class="divider"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
+            <div style="width:28px;height:28px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">📍</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em">Endereço de entrega</div>
+          </div>
+          <div class="field">
+            <label>CEP</label>
+            <input type="text" name="cep" placeholder="Ex: 51020-000"/>
+          </div>
+          <div class="field">
+            <label>Logradouro (Rua/Avenida)</label>
+            <input type="text" name="logradouro" placeholder="Ex: Av. Boa Viagem"/>
+          </div>
+          <div class="field">
+            <label>Número</label>
+            <input type="text" name="numero" placeholder="Número"/>
+          </div>
+          <div class="field">
+            <label>Complemento</label>
+            <input type="text" name="complemento" placeholder="Apto, Bloco... (opcional)"/>
+          </div>
+          <div class="field">
+            <label>Bairro</label>
+            <input type="text" name="bairro" placeholder="Ex: Boa Viagem"/>
+          </div>
+          <div class="field">
+            <label>Cidade</label>
+            <input type="text" name="cidade" placeholder="Ex: Recife"/>
+          </div>
+          <div class="field">
+            <label>UF</label>
+            <input type="text" name="uf" placeholder="Ex: PE" maxlength="2"/>
+          </div>
+          
+          <button type="submit" class="btn-primary" style="width:100%;margin-top:.4rem;padding:13px">Criar minha conta</button>
+        </div>
+
+        <!-- SEÇÃO COZINHEIRO -->
+        <div id="sec-cozinheiro" style="display:none">
+          <div class="divider"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:.9rem">
+            <div style="width:28px;height:28px;background:#fff3cc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px">🍳</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text-m);text-transform:uppercase;letter-spacing:.05em">Informações do cozinheiro</div>
+          </div>
+          
+          <!-- Endereço do cozinheiro -->
+          <div class="field">
+            <label>CEP</label>
+            <input type="text" name="cep" placeholder="Ex: 51020-000"/>
+          </div>
+          <div class="field">
+            <label>Logradouro (Rua/Avenida)</label>
+            <input type="text" name="logradouro" placeholder="Ex: Av. Boa Viagem"/>
+          </div>
+          <div class="field">
+            <label>Número</label>
+            <input type="text" name="numero" placeholder="Número"/>
+          </div>
+          <div class="field">
+            <label>Complemento</label>
+            <input type="text" name="complemento" placeholder="Apto, Bloco... (opcional)"/>
+          </div>
+          <div class="field">
+            <label>Bairro / localização</label>
+            <input type="text" name="bairro" placeholder="Ex: Boa Viagem, Recife"/>
+          </div>
+          <div class="field">
+            <label>Cidade</label>
+            <input type="text" name="cidade" placeholder="Ex: Recife"/>
+          </div>
+          <div class="field">
+            <label>UF</label>
+            <input type="text" name="uf" placeholder="Ex: PE" maxlength="2"/>
+          </div>
+          
+  
+          <div class="field">
+            <label>Especialidades (selecione todas que se aplicam)</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:.4rem" id="espec-grid">
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)">
+                <input type="checkbox" name="especialidades" value="Low carb" style="accent-color:var(--green)"/> Low carb
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)">
+                <input type="checkbox" name="especialidades" value="Hipertrofia" style="accent-color:var(--green)"/> Hipertrofia
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)">
+                <input type="checkbox" name="especialidades" value="Vegano" style="accent-color:var(--green)"/> Vegano
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)">
+                <input type="checkbox" name="especialidades" value="Sem glúten" style="accent-color:var(--green)"/> Sem glúten
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)">
+                <input type="checkbox" name="especialidades" value="Sem lactose" style="accent-color:var(--green)"/> Sem lactose
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)">
+                <input type="checkbox" name="especialidades" value="Diabéticos" style="accent-color:var(--green)"/> Diabéticos
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)">
+                <input type="checkbox" name="especialidades" value="Emagrecimento" style="accent-color:var(--green)"/> Emagrecimento
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-m);cursor:pointer;padding:.4rem .6rem;border:1.5px solid var(--beige-mid);border-radius:8px;background:var(--white)">
+                <input type="checkbox" name="especialidades" value="Manutenção" style="accent-color:var(--green)"/> Manutenção
+              </label>
+            </div>
+          </div>
+      
+          <div class="field">
+            <label>Sobre você (aparece no seu perfil público)</label>
+            <textarea name="sobre_voce" placeholder="Ex: Cozinheira especializada em alimentação saudável há 3 anos. Sigo receitas de nutricionistas à risca e garanto gramatura correta..."></textarea>
+          </div>
+          <div style="background:var(--green-l);border-radius:10px;padding:.85rem;margin-bottom:1rem;font-size:12px;color:var(--green-d);line-height:1.6">
+            <strong>🔒 Verificação posterior:</strong> após o cadastro, nossa equipe entrará em contato via WhatsApp para verificar sua cozinha. Só cozinheiros verificados aparecem no marketplace.
+          </div>
+          <button type="submit" class="btn-primary" style="width:100%;margin-top:.2rem;padding:13px;background:var(--brown-btn)">Cadastrar como cozinheiro</button>
+        </div>
+      </form>
 
       <div style="text-align:center;margin-top:.9rem;font-size:13px;color:var(--text-l)">Já tem conta? <span class="link" onclick="go('s-login')">Entrar</span></div>
     </div>
@@ -143,6 +256,6 @@
   </div>
 </div>
 
-<script src="scripts.js"></script>
+<script src="/web-prototype/scripts.js"></script>
 </body>
 </html>
