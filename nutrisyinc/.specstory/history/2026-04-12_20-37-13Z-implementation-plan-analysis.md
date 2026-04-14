@@ -1290,7 +1290,6 @@ The user wants me to update the changelog.</details></think>
 
 _**Agent (composer-2-fast)**_
 
-
 Implementing the splash screen, updating the changelog, and reviewing the implementation plan. Checking the app structure and configuration.
 
 
@@ -1345,13 +1344,6 @@ _**Agent (composer-2-fast)**_
 
 _**Agent (composer-2-fast)**_
 
-
-
-
-
-
-_**Agent (composer-2-fast)**_
-
 <tool-use data-tool-type="search" data-tool-name="glob_file_search">
 <details>
 <summary>Tool use: **glob_file_search** • Searched codebase "" • **1** result in **1** directory</summary>
@@ -1369,13 +1361,6 @@ Directory: **E:\Faculdade\nutrisync\nutrisyinc\app** (1 file)
 <summary>Tool use: **glob_file_search**</summary>
 
 </details></tool-use>
-
-_**Agent (composer-2-fast)**_
-
-
-
-
-
 
 _**Agent (composer-2-fast)**_
 
@@ -1399,13 +1384,6 @@ Directory: **E:\Faculdade\nutrisync\nutrisyinc** (1 file)
 
 _**Agent (composer-2-fast)**_
 
-
-
-
-
-
-_**Agent (composer-2-fast)**_
-
 <tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2">
 <details><summary>Tool use: **run_terminal_command_v2** • Run command: Get-ChildItem -Path "E:\Faculdade\nutrisync\nutrisyinc\app" -Recurse | Select-Object FullName</summary>
 
@@ -1424,13 +1402,6 @@ Get-ChildItem -Path "E:\Faculdade\nutrisync\nutrisyinc\app" -Recurse | Select-Ob
 <summary>Tool use: **run_terminal_command_v2**</summary>
 
 </details></tool-use>
-
-_**Agent (composer-2-fast)**_
-
-
-
-
-
 
 _**Agent (composer-2-fast)**_
 
@@ -1476,13 +1447,6 @@ Status: **completed**
 
 _**Agent (composer-2-fast)**_
 
-
-
-
-
-
-_**Agent (composer-2-fast)**_
-
 File not found
 
 <tool-use data-tool-type="read" data-tool-name="read_file_v2"><details>
@@ -1501,26 +1465,12 @@ File not found
 
 _**Agent (composer-2-fast)**_
 
-
-
-
-
-
-_**Agent (composer-2-fast)**_
-
 File not found
 
 <tool-use data-tool-type="read" data-tool-name="read_file_v2"><details>
 <summary>Tool use: **read_file_v2**</summary>
 
 </details></tool-use>
-
-_**Agent (composer-2-fast)**_
-
-
-
-
-
 
 _**Agent (composer-2-fast)**_
 
@@ -1537,13 +1487,6 @@ _**Agent (composer-2-fast)**_
 
 _**Agent (composer-2-fast)**_
 
-
-
-
-
-
-_**Agent (composer-2-fast)**_
-
 <tool-use data-tool-type="search" data-tool-name="glob_file_search">
 <details>
 <summary>Tool use: **glob_file_search** • Searched codebase "" • **0** results in **1** directory</summary>
@@ -1557,13 +1500,6 @@ Directory: **E:\Faculdade\nutrisync\nutrisyinc** (0 files)
 <summary>Tool use: **glob_file_search**</summary>
 
 </details></tool-use>
-
-_**Agent (composer-2-fast)**_
-
-
-
-
-
 
 _**Agent (composer-2-fast)**_
 
@@ -1596,13 +1532,6 @@ Directory: **E:\Faculdade\nutrisync\nutrisyinc** (10 files)
 
 _**Agent (composer-2-fast)**_
 
-
-
-
-
-
-_**Agent (composer-2-fast)**_
-
 <tool-use data-tool-type="search" data-tool-name="glob_file_search">
 <details>
 <summary>Tool use: **glob_file_search** • Searched codebase "" • **0** results in **1** directory</summary>
@@ -1616,13 +1545,6 @@ Directory: **E:\Faculdade\nutrisync** (0 files)
 <summary>Tool use: **glob_file_search**</summary>
 
 </details></tool-use>
-
-_**Agent (composer-2-fast)**_
-
-
-
-
-
 
 _**Agent (composer-2-fast)**_
 
@@ -1667,13 +1589,6 @@ Status: **completed**
 
 _**Agent (composer-2-fast)**_
 
-
-
-
-
-
-_**Agent (composer-2-fast)**_
-
 <tool-use data-tool-type="read" data-tool-name="read_file_v2">
 <details><summary>Tool use: **read_file_v2** • Read file: package.json</summary>
 
@@ -1684,3 +1599,445 @@ _**Agent (composer-2-fast)**_
 <summary>Tool use: **read_file_v2**</summary>
 
 </details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+The workspace may have excluded _layout files from the glob pattern because of ignore rules.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="search" data-tool-name="glob_file_search">
+<details>
+<summary>Tool use: **glob_file_search** • Searched codebase "" • **1** result in **1** directory</summary>
+
+Directory: **E:\Faculdade\nutrisync\nutrisyinc\app** (1 file)
+
+| File |
+|------|
+| `../app\(tabs)\index.tsx` |
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="search" data-tool-name="glob_file_search"><details>
+<summary>Tool use: **glob_file_search**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+The glob pattern specifically matches index.tsx files under the app directory, which corresponds to the modal component.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="search" data-tool-name="glob_file_search">
+<details>
+<summary>Tool use: **glob_file_search** • Searched codebase "" • **1** result in **1** directory</summary>
+
+Directory: **E:\Faculdade\nutrisync\nutrisyinc\app** (1 file)
+
+| File |
+|------|
+| `../app\(tabs)\index.tsx` |
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="search" data-tool-name="glob_file_search"><details>
+<summary>Tool use: **glob_file_search**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+Only one file exists in the app folder, so exploring that file is the next step.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search">
+<details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+
+Parameters:
+
+```json
+{
+  "caseInsensitive": false,
+  "path": "E:\\Faculdade\\nutrisync\\nutrisyinc",
+  "pattern": "explore"
+}
+```
+Additional data:
+
+```json
+{
+  "isPruned": true,
+  "outputMode": "content",
+  "path": "E:\\Faculdade\\nutrisync\\nutrisyinc",
+  "pattern": "explore",
+  "topFiles": [
+    {
+      "matchCount": 13,
+      "uri": ".\\.specstory\\history\\2026-04-12_20-37-13Z-implementation-plan-analysis.md"
+    },
+    {
+      "matchCount": 1,
+      "uri": ".\\app\\(tabs)\\index.tsx"
+    },
+    {
+      "matchCount": 1,
+      "uri": ".\\.specstory\\history\\2026-04-12_20-35-52Z-could-you-init-gemini.md"
+    }
+  ],
+  "totalFiles": 3,
+  "totalMatches": 15
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search"><details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+The explore.tsx file appears to be missing from the repository and needs to be created to establish the full application structure.
+- The file should be added to the appropriate directory
+- It should include the necessary components and logic for exploration functionality
+- This will complete the basic app structure requirements The application structure requires a root layout file (`app/_layout.tsx`) that defines a stack with a splash screen as the default route and a tabs group. The initial route should be `app/index.tsx`, not an anchored tab route, to ensure proper navigation flow in Expo Router 3+. 
+
+Key files needed:
+- `app/_layout.tsx` - Root stack configuration
+- `app/index.tsx` - Splash screen (default route)
+- `app/(tabs)/_layout.tsx` - Tabs layout
+- `app/(tabs)/index.tsx` - Tabs home
+- `app/(tabs)/explore.tsx` - Explore functionality
+
+The standard pattern uses `app/index.tsx` as the entry point when using Expo Router 3+ with tabs, avoiding anchor-based routing for the initial screen. In Expo Router, `app/index.tsx` serves as the root route (`/`), while `(tabs)` maps to `/(tabs)`. The initial route should typically be `/` if `index.tsx` exists.
+
+For splash screen implementation:
+- Use `useEffect` with `router.replace('/(tabs)')` or `router.replace('/(tabs)/index')` after 23 seconds
+- Implement `expo-splash-screen` by calling `SplashScreen.preventAutoHideAsync()` in the root `_layout.tsx`
+- Hide the native splash screen after the JS splash animation completes for smoother UX The splash screen should display the logo and name before navigating to the main tabs interface. The implementation uses `router.replace('/(tabs)')` to redirect after the splash ends. Key steps include:
+
+- Using `expo-splash-screen` for proper splash handling
+- Calling `SplashScreen.preventAutoHideAsync()` in the root layout
+- Hiding the native splash screen with `SplashScreen.hideAsync()` when the UI is ready
+- Navigating to `/(tabs)` or `/(tabs)/index` after splash duration The app initializes with the native splash screen visible, then hides it upon loading the root layout. The JS splash screen is displayed next, showing the logo and "NutriSync" name. After 2.5 seconds, the app navigates to the main tabs interface using `router.replace('/(tabs)'`.
+
+A minimal `explore.tsx` placeholder file should be created to complete the application structure. The root `_layout.tsx` file uses `expo-router`'s `Stack` component to define navigation routes. The order of `<Stack.Screen>` components determines the initial route  `app/index.tsx` maps to the root `/` route, making it the default screen. The layout includes a `Stack` with `headerShown: false` and two screens: `index` (splash) and `(tabs)` (main tabs interface). The `StatusBar` is set to `auto` style. This setup ensures proper routing in Expo Router 3+, where `index.tsx` serves as the root route.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search">
+<details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+
+Parameters:
+
+```json
+{
+  "caseInsensitive": false,
+  "path": "E:\\Faculdade\\nutrisync\\nutrisyinc\\app",
+  "pattern": "modal|href"
+}
+```
+Additional data:
+
+```json
+{
+  "isPruned": true,
+  "outputMode": "content",
+  "path": "E:\\Faculdade\\nutrisync\\nutrisyinc\\app",
+  "pattern": "modal|href",
+  "topFiles": [],
+  "totalFiles": 0,
+  "totalMatches": 0
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="unknown" data-tool-name="ripgrep_raw_search"><details>
+<summary>Tool use: **ripgrep_raw_search**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+No modal in app. Good.
+
+Creating the 4 files. Use expo-router's Stack for the root layout. For splash screen, use `useEffect` with `router.replace('/(tabs)')` after a delay. Import `SplashScreen` from 'expo-splash-screen' and call `SplashScreen.preventAutoHideAsync()` in the root layout. Typed routes can use `router.replace('/(tabs)' as const)` or Href type. The `router.replace('/(tabs)')` should work in expo-router 6. The splash screen must be prevented from auto-hiding by calling `SplashScreen.preventAutoHideAsync()` at the module level in `_layout.tsx`. This should be done before rendering the app, as per Expo documentation. The `router.replace('/(tabs)')` is used after a 2.5-second delay to navigate to the main tabs layout.
+
+- Call `SplashScreen.preventAutoHideAsync()` at the top level of `_layout.tsx`
+- Use `router.replace('/(tabs)')` after a 2.5 second delay
+- Ensure this happens before the app renders
+- The delay allows splash screen to show properly before navigation</details></think>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2">
+<details><summary>Tool use: **read_file_v2** • Read file: hooks/use-color-scheme.ts</summary>
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="read" data-tool-name="read_file_v2"><details>
+<summary>Tool use: **read_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+- Implement the splash app/index functionality
+- Ensure proper initialization of the splash application
+- Set up necessary components for the index page</details></think>
+
+_**Agent (composer-2-fast)**_
+
+Creating missing Expo Router files (only `app/(tabs)/index.tsx` was present), adding a root splash screen, and updating the changelog and implementation plan.
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: app/_layout.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: app/index.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: app/(tabs)/_layout.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: app/(tabs)/explore.tsx</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+Fix splash: hiding native splash immediately in useEffect might still show white flash.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints">
+<details>
+<summary>Tool use: **read_lints**</summary>
+
+
+Parameters:
+
+```json
+{
+  "paths": [
+    "app/_layout.tsx",
+    "app/index.tsx",
+    "app/(tabs)/_layout.tsx",
+    "app/(tabs)/explore.tsx"
+  ]
+}
+```
+Result:
+
+```json
+{
+  "linterErrorsByFile": [
+    {
+      "relativeWorkspacePath": "app/_layout.tsx"
+    },
+    {
+      "relativeWorkspacePath": "app/index.tsx"
+    },
+    {
+      "relativeWorkspacePath": "app/(tabs)/_layout.tsx"
+    },
+    {
+      "relativeWorkspacePath": "app/(tabs)/explore.tsx"
+    }
+  ]
+}
+```
+Status: **completed**
+
+
+</details>
+</tool-use>
+
+<tool-use data-tool-type="unknown" data-tool-name="read_lints"><details>
+<summary>Tool use: **read_lints**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2">
+<details><summary>Tool use: **run_terminal_command_v2** • Run command: Set-Location "E:\Faculdade\nutrisync\nutrisyinc"; npm run lint</summary>
+
+```bash
+Set-Location "E:\Faculdade\nutrisync\nutrisyinc"; npm run lint
+```
+
+```
+
+&gt; nutrisyinc@1.0.0 lint
+&gt; expo lint
+
+
+```
+</details>
+</tool-use>
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2"><details>
+<summary>Tool use: **run_terminal_command_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+Linting has been completed successfully. The SplashScreen is next.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2">
+<details><summary>Tool use: **run_terminal_command_v2** • Run command: Set-Location "E:\Faculdade\nutrisync\nutrisyinc"; npx tsc --noEmit</summary>
+
+```bash
+Set-Location "E:\Faculdade\nutrisync\nutrisyinc"; npx tsc --noEmit
+```
+</details>
+</tool-use>
+
+<tool-use data-tool-type="shell" data-tool-name="run_terminal_command_v2"><details>
+<summary>Tool use: **run_terminal_command_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+All good. Update changelog and IMPLEMENTATION_PLAN.</details></think>
+
+_**Agent (composer-2-fast)**_
+
+Updating `changelog.md` and `IMPLEMENTATION_PLAN.md`.
+
+
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: changelog.md</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2">
+
+<details><summary>Tool use: **edit_file_v2** • Edit file: IMPLEMENTATION_PLAN.md</summary>
+
+</details>
+
+</tool-use>
+
+<tool-use data-tool-type="write" data-tool-name="edit_file_v2"><details>
+<summary>Tool use: **edit_file_v2**</summary>
+
+</details></tool-use>
+
+_**Agent (composer-2-fast)**_
+
+<think><details><summary>Thought Process</summary>
+Verify: did we have modal.tsx before?</details></think>
+
+_**Agent (composer-2-fast)**_
+
+Here’s what was done:
+
+### Splash flow
+- **`app/index.tsx`** — Full-screen splash: green logo tile (🌿), **NutriSync**, tagline **sua receita, nossa marmita**. Uses **`expo-splash-screen`**: `hideAsync()` after mount so the native splash hands off to this screen, then **`router.replace('/(tabs)')`** after **2.5s** so the landing is **`(tabs)/index.tsx`**.
+- **`app/_layout.tsx`** — Root **Stack** with `index` and `(tabs)`, theme provider, **`SplashScreen.preventAutoHideAsync()`** at load, status bar.
+
+The repo only had **`app/(tabs)/index.tsx`** under `app/`; **`app/_layout.tsx`**, **`app/(tabs)/_layout.tsx`**, and **`app/(tabs)/explore.tsx`** were missing, so those were added so Expo Router can run with splash → tabs. **`(tabs)/explore.tsx`** is a small placeholder for **“Ver cozinheiros”** until the real marketplace route exists.
+
+### `changelog.md`
+- Documented splash, root layout, tabs layout (hidden bar), explore placeholder, landing on `(tabs)/index`, secondary button alignment fix, and navigation notes.
+
+### `IMPLEMENTATION_PLAN.md`
+- **Phase 2:** Documents **splash (`app/index`)** vs **landing (`(tabs)/index`)**, hidden tabs, temporary **explore**, and **planned** routes listed separately; note on future **s-home-user** vs landing.
+- **Phase 1:** Typography bullet now says to **extend `themed-text`**, not recreate it.
+- **Phase 4:** Splash + landing marked **[x]** with correct file mapping (**`index.html` → `(tabs)/index.tsx`**).
+- **Phase 5:** Mentions emoji logo on splash as temporary.
+
+To change how long the splash stays on screen, edit **`SPLASH_MS`** in **`app/index.tsx`** (milliseconds).
