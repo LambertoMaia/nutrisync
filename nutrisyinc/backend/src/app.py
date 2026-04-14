@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from flask_cors import CORS
+from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 import sys
 import os
@@ -569,7 +570,11 @@ def criar_pedido():
         # Verificar se a proposta existe (se foi fornecida)
         proposta_id = data.get('proposta_id')
         if proposta_id:
-            proposta = db.query(Proposta).filter(Proposta.id == proposta_id).first()
+            #proposta = db.query(Proposta).filter(Proposta.id == proposta_id).first()
+            proposta = db.query(Proposta)\
+            .options(joinedload(Proposta.solicitacao))\
+                .filter(Proposta.id == proposta_id)\
+                .first()
             if not proposta:
                 return jsonify({'success': False, 'error': 'Proposta não encontrada'}), 404
             if proposta.cozinheiro_id != data['cozinheiro_id']:
@@ -657,7 +662,7 @@ def pedidos_do_cliente(cliente_id):
                     proposta_info = {
                         'id': proposta.id,
                         'valor': float(proposta.valor),
-                        'receita_link': proposta.receita_link
+                        'receita_link': proposta.solicitacao.receita_link if proposta.solicitacao else None
                     }
             
             resultado.append({
@@ -702,7 +707,7 @@ def pedidos_do_cozinheiro(cozinheiro_id):
                         'id': proposta.id,
                         'valor': float(proposta.valor),
                         'status': proposta.status_,
-                        'receita_link': proposta.receita_link
+                        'receita_link': proposta.solicitacao.receita_link if proposta.solicitacao else None
                     }
             
             resultado.append({
@@ -984,8 +989,6 @@ def atualizar_perfil():
                 usuario.nome = data['nome']
             if 'telefone' in data:
                 valido, telefone = validar_telefone(db, data['telefone'], 'cliente', session['usuario_id'])
-            if 'telefone' in data:
-                valido, telefone = validar_telefone(db, data['telefone'], 'cliente', session['usuario_id'])
             if not valido:
                 return jsonify({'error': telefone}), 400
             usuario.telefone = telefone
@@ -1214,12 +1217,18 @@ def criar_proposta():
     try:
         data = request.json
         
+        #nova_proposta = Proposta(
+        #    valor=Decimal(str(data['valor'])),
+        #    cozinheiro_id=session['usuario_id'],
+        #    data_criacao=datetime.now(),
+        #    receita_link=data.get('receita_link')
+        #)
         nova_proposta = Proposta(
             valor=Decimal(str(data['valor'])),
             cozinheiro_id=session['usuario_id'],
-            status_=0,  # 0 = pendente
-            data_criacao=datetime.now(),
-            receita_link=data.get('receita_link')
+            solicitacao_id=data['solicitacao_id'],  # OBRIGATÓRIO AGORA
+            status_=0,
+            data_criacao=datetime.now()
         )
         
         db.add(nova_proposta)
@@ -1233,7 +1242,7 @@ def criar_proposta():
                 'valor': float(nova_proposta.valor),
                 'status': nova_proposta.status_,
                 'data_criacao': nova_proposta.data_criacao.strftime('%d/%m/%Y %H:%M'),
-                'receita_link': nova_proposta.receita_link
+                'receita_link': nova_proposta.solicitacao.receita_link if nova_proposta.solicitacao else None
             }
         })
     except Exception as e:
@@ -1423,7 +1432,7 @@ def detalhes_pedido(pedido_id):
                     'status_texto': 'Pendente' if proposta.status_ == 0 else 'Aceita' if proposta.status_ == 1 else 'Recusada',
                     'data_criacao': proposta.data_criacao.strftime('%d/%m/%Y %H:%M'),
                     'data_aceita': proposta.data_aceita.strftime('%d/%m/%Y %H:%M') if proposta.data_aceita else None,
-                    'receita_link': proposta.receita_link
+                    'receita_link': proposta.solicitacao.receita_link if proposta.solicitacao else None
                 }
         
         # Preparar dados da marmita se existir

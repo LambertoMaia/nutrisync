@@ -1,8 +1,8 @@
 from database import Base
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, DECIMAL
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
-from database import Base
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, DECIMAL
 from sqlalchemy.orm import relationship
 
@@ -53,20 +53,62 @@ class Cliente(Base):
     restricao = Column(Text)
     
     pedidos = relationship("Pedido", back_populates="cliente")
+    solicitacoes = relationship("Solicitacao", back_populates="cliente")
+
+#class Proposta(Base):
+#    __tablename__ = "proposta"
+#   
+#   id = Column(Integer, primary_key=True)
+#   valor = Column(DECIMAL(10,2), nullable=False)
+#   cozinheiro_id = Column(Integer, ForeignKey("cozinheiros.id"), nullable=False)
+#   status_ = Column(Integer, default=0)
+#   data_criacao = Column(DateTime, nullable=False)
+#   data_aceita = Column(DateTime, nullable=True)
+#   receita_link = Column(String(255))
+#   
+#   cozinheiro = relationship("Cozinheiro", back_populates="propostas")
+#pedidos = relationship("Pedido", back_populates="proposta")
 
 class Proposta(Base):
     __tablename__ = "proposta"
     
     id = Column(Integer, primary_key=True)
     valor = Column(DECIMAL(10,2), nullable=False)
-    cozinheiro_id = Column(Integer, ForeignKey("cozinheiros.id"), nullable=False)
-    status_ = Column(Integer, default=0)
-    data_criacao = Column(DateTime, nullable=False)
-    data_aceita = Column(DateTime, nullable=True)
-    receita_link = Column(String(255))
     
+    cozinheiro_id = Column(Integer, ForeignKey("cozinheiros.id"), nullable=False)
+    solicitacao_id = Column(Integer, ForeignKey("solicitacoes.id"), nullable=False)
+    
+    status_ = Column(Integer, default=0, nullable =False)
+    data_criacao = Column(DateTime, default=datetime.now)
+    data_aceita = Column(DateTime, nullable=True)
+    
+    # Relacionamentos
     cozinheiro = relationship("Cozinheiro", back_populates="propostas")
+    solicitacao = relationship("Solicitacao", back_populates="propostas")
     pedidos = relationship("Pedido", back_populates="proposta")
+
+class Solicitacao(Base):
+    __tablename__ = "solicitacoes"
+    
+    id = Column(Integer, primary_key=True)
+    cliente_id = Column(Integer, ForeignKey("cliente.id"), nullable=False)
+
+    receita_link = Column(String(255))  # imagem/pdf
+    refeicoes_por_dia = Column(Integer)
+    calorias_diarias = Column(Integer)
+    restricoes = Column(Text)
+    alimentos_proibidos = Column(Text)
+    observacoes_nutricionista = Column(Text)
+    
+    qtd_dias = Column(Integer)
+    porcoes_por_refeicao = Column(Integer)
+    observacoes_adicionais = Column(Text)
+    
+    data_criacao = Column(DateTime, default=datetime.now)
+    
+    cliente = relationship("Cliente", back_populates="solicitacoes")
+    propostas = relationship("Proposta", back_populates="solicitacao")
+    
 
 class Marmita(Base):
     __tablename__ = "marmitas"
