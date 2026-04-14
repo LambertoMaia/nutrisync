@@ -210,7 +210,6 @@ def processar_cadastro():
     else:
         return cadastrar_cozinheiro_form()
 
-
 def cadastrar_cliente_form():
     """Cadastra um novo cliente via formulário HTML"""
     db = SessionLocal()
