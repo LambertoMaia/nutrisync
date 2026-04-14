@@ -542,6 +542,52 @@ def criar_pedido():
     try:
         data = request.json
         
+        # Validar campos obrigatórios
+        if not data.get('cozinheiro_id'):
+            return jsonify({'success': False, 'error': 'ID do cozinheiro é obrigatório'}), 400
+        
+        if not data.get('qtd_marmitas') or data['qtd_marmitas'] <= 0:
+            return jsonify({'success': False, 'error': 'Quantidade de marmitas inválida'}), 400
+        
+        if not data.get('valor_total') or float(data['valor_total']) <= 0:
+            return jsonify({'success': False, 'error': 'Valor total inválido'}), 400
+        
+        # Verificar se o cozinheiro existe
+        cozinheiro = db.query(Cozinheiro).filter(Cozinheiro.id == data['cozinheiro_id']).first()
+        if not cozinheiro:
+            return jsonify({'success': False, 'error': 'Cozinheiro não encontrado'}), 404
+        
+        # Verificar se a marmita existe (se foi fornecida)
+        marmita_id = data.get('marmita_id')
+        if marmita_id:
+            marmita = db.query(Marmita).filter(Marmita.id == marmita_id).first()
+            if not marmita:
+                return jsonify({'success': False, 'error': 'Marmita não encontrada'}), 404
+            if marmita.cozinheiro_id != data['cozinheiro_id']:
+                return jsonify({'success': False, 'error': 'Marmita não pertence a este cozinheiro'}), 400
+        
+        # Verificar se a proposta existe (se foi fornecida)
+        proposta_id = data.get('proposta_id')
+        if proposta_id:
+            proposta = db.query(Proposta).filter(Proposta.id == proposta_id).first()
+            if not proposta:
+                return jsonify({'success': False, 'error': 'Proposta não encontrada'}), 404
+            if proposta.cozinheiro_id != data['cozinheiro_id']:
+                return jsonify({'success': False, 'error': 'Proposta não pertence a este cozinheiro'}), 400
+            # Verificar se a proposta ainda está pendente
+            if proposta.status_ != 0:
+                return jsonify({'success': False, 'error': 'Esta proposta não está mais disponível'}), 400
+        
+        # Verificar se o cliente existe
+        cliente = db.query(Cliente).filter(Cliente.id == session['usuario_id']).first()
+        if not cliente:
+            return jsonify({'success': False, 'error': 'Cliente não encontrado'}), 404
+        
+        # Validar se o cliente não está tentando pedir para si mesmo
+        if session['usuario_id'] == data['cozinheiro_id']:
+            return jsonify({'success': False, 'error': 'Você não pode fazer pedido para si mesmo'}), 400
+        
+        # Criar o pedido
         novo_pedido = Pedido(
             cozinheiro_id=data['cozinheiro_id'],
             cliente_id=session['usuario_id'],
@@ -549,22 +595,48 @@ def criar_pedido():
             horario=datetime.now(),
             qtd_marmitas=data['qtd_marmitas'],
             val_total=Decimal(str(data['valor_total'])),
-            marmita_id=data.get('marmita_id')
+            marmita_id=marmita_id if marmita_id else None,
+            proposta_id=proposta_id if proposta_id else None,
+            plano_id=data.get('plano_id') if data.get('plano_id') else None,
+            avaliacao=0  # Inicialmente sem avaliação
         )
         
         db.add(novo_pedido)
         db.commit()
         db.refresh(novo_pedido)
         
-        return jsonify({'success': True, 'pedido_id': novo_pedido.id})
+        # Se foi usada uma proposta, atualizar seu status para "aceita"
+        if proposta_id:
+            proposta.status_ = 1  # 1 = aceita
+            proposta.data_aceita = datetime.now()
+            db.commit()
+        
+        # Log do pedido criado
+        print(f"Pedido #{novo_pedido.id} criado - Cliente: {cliente.nome}, Cozinheiro: {cozinheiro.nome}, Valor: R$ {novo_pedido.val_total}")
+        
+        return jsonify({
+            'success': True, 
+            'pedido_id': novo_pedido.id,
+            'message': 'Pedido criado com sucesso!',
+            'pedido': {
+                'id': novo_pedido.id,
+                'status': novo_pedido.status,
+                'valor_total': float(novo_pedido.val_total),
+                'qtd_marmitas': novo_pedido.qtd_marmitas,
+                'horario': novo_pedido.horario.strftime('%d/%m/%Y %H:%M')
+            }
+        })
+        
     except Exception as e:
         db.rollback()
         print(f"Erro ao criar pedido: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
-
-# ============ API: PEDIDOS DO CLIENTE ============
+        
+# ============ API: PEDIDOS DO CLIENTE (ATUALIZADO COM PROPOSTA) ============
 @app.route('/api/pedidos/cliente/<int:cliente_id>', methods=['GET'])
 def pedidos_do_cliente(cliente_id):
     """Retorna todos os pedidos de um cliente"""
@@ -575,22 +647,40 @@ def pedidos_do_cliente(cliente_id):
     try:
         pedidos = db.query(Pedido).filter(Pedido.cliente_id == cliente_id).order_by(Pedido.horario.desc()).all()
         
-        return jsonify([{
-            'id': p.id,
-            'cozinheiro_nome': p.cozinheiro.nome if p.cozinheiro else 'Desconhecido',
-            'cozinheiro_id': p.cozinheiro_id,
-            'status': p.status,
-            'data': p.horario.strftime('%d/%m/%Y'),
-            'hora': p.horario.strftime('%H:%M'),
-            'qtd_marmitas': p.qtd_marmitas,
-            'valor_total': float(p.val_total),
-            'avaliacao': p.avaliacao,
-            'marmita_nome': p.marmita.nome if p.marmita else 'Marmita Padrão'
-        } for p in pedidos])
+        resultado = []
+        for p in pedidos:
+            # Buscar informações da proposta se existir
+            proposta_info = None
+            if p.proposta_id:
+                proposta = db.query(Proposta).filter(Proposta.id == p.proposta_id).first()
+                if proposta:
+                    proposta_info = {
+                        'id': proposta.id,
+                        'valor': float(proposta.valor),
+                        'receita_link': proposta.receita_link
+                    }
+            
+            resultado.append({
+                'id': p.id,
+                'cozinheiro_nome': p.cozinheiro.nome if p.cozinheiro else 'Desconhecido',
+                'cozinheiro_id': p.cozinheiro_id,
+                'status': p.status,
+                'data': p.horario.strftime('%d/%m/%Y'),
+                'hora': p.horario.strftime('%H:%M'),
+                'qtd_marmitas': p.qtd_marmitas,
+                'valor_total': float(p.val_total),
+                'avaliacao': p.avaliacao,
+                'marmita_nome': p.marmita.nome if p.marmita else 'Marmita Padrão',
+                'proposta_id': p.proposta_id,
+                'proposta': proposta_info,
+                'pode_avaliar': p.status == 'entregue' and p.avaliacao == 0
+            })
+        
+        return jsonify(resultado)
     finally:
         db.close()
 
-# ============ API: PEDIDOS DO COZINHEIRO ============
+# ============ API: PEDIDOS DO COZINHEIRO (ATUALIZADO COM PROPOSTA) ============
 @app.route('/api/pedidos/cozinheiro/<int:cozinheiro_id>', methods=['GET'])
 def pedidos_do_cozinheiro(cozinheiro_id):
     """Retorna os pedidos de um cozinheiro para o painel"""
@@ -601,19 +691,38 @@ def pedidos_do_cozinheiro(cozinheiro_id):
     try:
         pedidos = db.query(Pedido).filter(Pedido.cozinheiro_id == cozinheiro_id).order_by(Pedido.horario.desc()).all()
         
-        return jsonify([{
-            'id': p.id,
-            'cliente_nome': p.cliente.nome if p.cliente else 'Cliente',
-            'cliente_id': p.cliente_id,
-            'status': p.status,
-            'data': p.horario.strftime('%d/%m/%Y %H:%M'),
-            'qtd_marmitas': p.qtd_marmitas,
-            'valor_total': float(p.val_total),
-            'endereco_entrega': f"{p.cliente.rua}, {p.cliente.numero} - {p.cliente.complemento if p.cliente.complemento else ''}".strip()
-        } for p in pedidos])
+        resultado = []
+        for p in pedidos:
+            # Buscar informações da proposta se existir
+            proposta_info = None
+            if p.proposta_id:
+                proposta = db.query(Proposta).filter(Proposta.id == p.proposta_id).first()
+                if proposta:
+                    proposta_info = {
+                        'id': proposta.id,
+                        'valor': float(proposta.valor),
+                        'status': proposta.status_,
+                        'receita_link': proposta.receita_link
+                    }
+            
+            resultado.append({
+                'id': p.id,
+                'cliente_nome': p.cliente.nome if p.cliente else 'Cliente',
+                'cliente_id': p.cliente_id,
+                'status': p.status,
+                'data': p.horario.strftime('%d/%m/%Y %H:%M'),
+                'qtd_marmitas': p.qtd_marmitas,
+                'valor_total': float(p.val_total),
+                'avaliacao': p.avaliacao,
+                'proposta_id': p.proposta_id,
+                'proposta': proposta_info,
+                'endereco_entrega': f"{p.cliente.rua}, {p.cliente.numero} - {p.cliente.complemento if p.cliente.complemento else ''}".strip()
+            })
+        
+        return jsonify(resultado)
     finally:
         db.close()
-
+        
 # ============ API: ATUALIZAR STATUS DO PEDIDO ============
 @app.route('/api/pedidos/<int:pedido_id>/status', methods=['PUT'])
 def atualizar_status_pedido(pedido_id):
@@ -651,15 +760,37 @@ def criar_avaliacao():
     db = SessionLocal()
     try:
         data = request.json
-        pedido = db.query(Pedido).filter(Pedido.id == data['pedido_id']).first()
+        
+        # Validar campos
+        pedido_id = data.get('pedido_id')
+        nota = data.get('nota')
+        
+        if not pedido_id:
+            return jsonify({'error': 'ID do pedido é obrigatório'}), 400
+        
+        if not nota or nota < 1 or nota > 5:
+            return jsonify({'error': 'Nota inválida. Deve ser entre 1 e 5'}), 400
+        
+        # Buscar o pedido
+        pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
         
         if not pedido:
             return jsonify({'error': 'Pedido não encontrado'}), 404
         
+        # Verificar se o pedido pertence ao cliente logado
         if session['usuario_id'] != pedido.cliente_id:
             return jsonify({'error': 'Não autorizado'}), 401
         
-        pedido.avaliacao = data['nota']
+        # Verificar se o pedido já foi avaliado
+        if pedido.avaliacao > 0:
+            return jsonify({'error': 'Este pedido já foi avaliado'}), 400
+        
+        # Verificar se o pedido está entregue
+        if pedido.status != 'entregue':
+            return jsonify({'error': 'Apenas pedidos entregues podem ser avaliados'}), 400
+        
+        # Atualizar avaliação
+        pedido.avaliacao = nota
         db.commit()
         
         # Atualizar média do cozinheiro
@@ -674,9 +805,25 @@ def criar_avaliacao():
             cozinheiro.avaliacao = int(round(media))
             db.commit()
         
-        return jsonify({'success': True, 'message': 'Avaliação enviada com sucesso!'})
+        # Buscar estatísticas atualizadas
+        total_avaliacoes = db.query(Pedido).filter(
+            Pedido.cozinheiro_id == pedido.cozinheiro_id,
+            Pedido.avaliacao > 0
+        ).count()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Avaliação enviada com sucesso!',
+            'avaliacao': {
+                'pedido_id': pedido.id,
+                'nota': nota,
+                'media_cozinheiro': float(media),
+                'total_avaliacoes': total_avaliacoes
+            }
+        })
     except Exception as e:
         db.rollback()
+        print(f"Erro ao criar avaliação: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         db.close()
@@ -1245,6 +1392,158 @@ def buscar_pedidos():
     finally:
         db.close()
 
+# ============ API: BUSCAR PEDIDO POR ID (DETALHES COMPLETOS) ============
+@app.route('/api/pedidos/<int:pedido_id>', methods=['GET'])
+def detalhes_pedido(pedido_id):
+    """Retorna detalhes completos de um pedido específico"""
+    if 'usuario_id' not in session:
+        return jsonify({'error': 'Não autorizado'}), 401
+    
+    db = SessionLocal()
+    try:
+        pedido = db.query(Pedido).filter(Pedido.id == pedido_id).first()
+        
+        if not pedido:
+            return jsonify({'error': 'Pedido não encontrado'}), 404
+        
+        # Verificar permissão (cliente, cozinheiro ou admin do pedido)
+        usuario_tipo = session.get('usuario_tipo')
+        if session['usuario_id'] != pedido.cliente_id and session['usuario_id'] != pedido.cozinheiro_id and usuario_tipo != 'admin':
+            return jsonify({'error': 'Não autorizado'}), 401
+        
+        # Preparar dados da proposta se existir
+        proposta_info = None
+        if pedido.proposta_id:
+            proposta = db.query(Proposta).filter(Proposta.id == pedido.proposta_id).first()
+            if proposta:
+                proposta_info = {
+                    'id': proposta.id,
+                    'valor': float(proposta.valor),
+                    'status': proposta.status_,
+                    'status_texto': 'Pendente' if proposta.status_ == 0 else 'Aceita' if proposta.status_ == 1 else 'Recusada',
+                    'data_criacao': proposta.data_criacao.strftime('%d/%m/%Y %H:%M'),
+                    'data_aceita': proposta.data_aceita.strftime('%d/%m/%Y %H:%M') if proposta.data_aceita else None,
+                    'receita_link': proposta.receita_link
+                }
+        
+        # Preparar dados da marmita se existir
+        marmita_info = None
+        if pedido.marmita_id:
+            marmita = db.query(Marmita).filter(Marmita.id == pedido.marmita_id).first()
+            if marmita:
+                marmita_info = {
+                    'id': marmita.id,
+                    'nome': marmita.nome,
+                    'preco': float(marmita.preco),
+                    'foto': marmita.foto
+                }
+        
+        # Preparar dados do plano se existir
+        plano_info = None
+        if pedido.plano_id:
+            plano = db.query(Especialidade).filter(Especialidade.id == pedido.plano_id).first()
+            if plano:
+                plano_info = {
+                    'id': plano.id,
+                    'nome': plano.nome
+                }
+        
+        # Verificar se o pedido pode ser avaliado
+        pode_avaliar = (
+            pedido.status == 'entregue' and 
+            pedido.avaliacao == 0 and 
+            session['usuario_id'] == pedido.cliente_id
+        )
+        
+        # Verificar se o pedido pode ser cancelado
+        pode_cancelar = (
+            pedido.status in ['pendente', 'confirmado'] and
+            session['usuario_id'] == pedido.cliente_id
+        )
+        
+        # Verificar se o pedido pode ser atualizado pelo cozinheiro
+        pode_atualizar_status = (
+            session['usuario_id'] == pedido.cozinheiro_id and
+            pedido.status not in ['entregue', 'cancelado']
+        )
+        
+        # Lista de status possíveis para atualização
+        status_disponiveis = []
+        if pode_atualizar_status:
+            status_flow = {
+                'pendente': ['confirmado', 'cancelado'],
+                'confirmado': ['preparando', 'cancelado'],
+                'preparando': ['saiu_entrega', 'cancelado'],
+                'saiu_entrega': ['entregue'],
+                'entregue': [],
+                'cancelado': []
+            }
+            status_disponiveis = status_flow.get(pedido.status, [])
+        
+        # Construir endereço completo do cliente
+        endereco_cliente = f"{pedido.cliente.rua}, {pedido.cliente.numero}"
+        if pedido.cliente.complemento:
+            endereco_cliente += f" - {pedido.cliente.complemento}"
+        
+        return jsonify({
+            'success': True,
+            'pedido': {
+                'id': pedido.id,
+                'status': pedido.status,
+                'status_texto': {
+                    'pendente': 'Pendente',
+                    'confirmado': 'Confirmado',
+                    'preparando': 'Preparando',
+                    'saiu_entrega': 'Saiu para Entrega',
+                    'entregue': 'Entregue',
+                    'cancelado': 'Cancelado'
+                }.get(pedido.status, pedido.status),
+                'horario': pedido.horario.strftime('%d/%m/%Y %H:%M'),
+                'horario_iso': pedido.horario.isoformat(),
+                'qtd_marmitas': pedido.qtd_marmitas,
+                'valor_total': float(pedido.val_total),
+                'valor_unitario': float(pedido.val_total / pedido.qtd_marmitas) if pedido.qtd_marmitas > 0 else 0,
+                'avaliacao': pedido.avaliacao,
+                'pode_avaliar': pode_avaliar,
+                'pode_cancelar': pode_cancelar,
+                'pode_atualizar_status': pode_atualizar_status,
+                'status_disponiveis': status_disponiveis
+            },
+            'cliente': {
+                'id': pedido.cliente.id,
+                'nome': pedido.cliente.nome,
+                'email': pedido.cliente.email,
+                'telefone': pedido.cliente.telefone,
+                'endereco_completo': endereco_cliente,
+                'rua': pedido.cliente.rua,
+                'numero': pedido.cliente.numero,
+                'complemento': pedido.cliente.complemento if pedido.cliente.complemento else '',
+                'cep': pedido.cliente.cep,
+                'restricao': pedido.cliente.restricao
+            } if pedido.cliente else None,
+            'cozinheiro': {
+                'id': pedido.cozinheiro.id,
+                'nome': pedido.cozinheiro.nome,
+                'email': pedido.cozinheiro.email,
+                'telefone': pedido.cozinheiro.telefone,
+                'especialidade': pedido.cozinheiro.especialidade.nome if pedido.cozinheiro.especialidade else None,
+                'avaliacao': pedido.cozinheiro.avaliacao,
+                'foto': pedido.cozinheiro.foto_link,
+                'tipo_entrega': pedido.cozinheiro.tipo_entrega,
+                'sobre': pedido.cozinheiro.sobre_voce
+            } if pedido.cozinheiro else None,
+            'proposta': proposta_info,
+            'marmita': marmita_info,
+            'plano': plano_info
+        })
+        
+    except Exception as e:
+        print(f"Erro ao buscar detalhes do pedido {pedido_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Erro ao buscar detalhes do pedido'}), 500
+    finally:
+        db.close()
 
 # ============ ROTA PARA PÁGINA 404 ============
 @app.errorhandler(404)

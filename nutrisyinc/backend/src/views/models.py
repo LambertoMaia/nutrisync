@@ -51,7 +51,6 @@ class Cliente(Base):
     complemento = Column(String(255))
     numero = Column(Integer, nullable=False)
     restricao = Column(Text)
-    enderecos = Column(Text)
     
     pedidos = relationship("Pedido", back_populates="cliente")
 
