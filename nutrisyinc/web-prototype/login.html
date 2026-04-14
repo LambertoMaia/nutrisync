@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NutriSync — Login</title>
+<title>Nutrilho — Login</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
-  <symbol id="ns-logo" viewBox="0 0 38 38">
+  <symbol id="nl-logo" viewBox="0 0 38 38">
     <rect width="38" height="38" rx="10" fill="#4a7c2f"/>
     <ellipse cx="19" cy="24" rx="10" ry="3.5" fill="none" stroke="#fff" stroke-width="1.8"/>
     <path d="M9 24 Q9 31 19 31 Q29 31 29 24" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-width="1.8"/>
@@ -25,14 +25,14 @@
 <div class="screen active" id="s-login">
   <nav class="topnav">
     <div class="logo-mark" onclick="go('s-home')">
-      <svg class="logo-svg"><use href="#ns-logo"/></svg>
-      <div><div class="logo-name">NutriSync</div><div class="logo-tag">sua receita, nossa marmita</div></div>
+      <svg class="logo-svg"><use href="#nl-logo"/></svg>
+      <div><div class="logo-name">Nutrilho</div><div class="logo-tag">sua receita, nossa marmita</div></div>
     </div>
   </nav>
   <div class="scroll-body" style="background:var(--beige);display:flex;align-items:center">
     <div class="form-wrap" style="margin:auto">
       <div class="form-title">Bem-vindo de volta</div>
-      <div class="form-sub">Acesse sua conta NutriSync</div>
+      <div class="form-sub">Acesse sua conta Nutrilho</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.3rem">
         <button id="lt-u" onclick="selLogin('u')" style="padding:9px;border-radius:8px;border:1.5px solid var(--green);background:var(--green-l);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--green-d);cursor:pointer">Cliente</button>
         <button id="lt-c" onclick="selLogin('c')" style="padding:9px;border-radius:8px;border:1.5px solid var(--beige-mid);background:var(--white);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text-m);cursor:pointer">Cozinheiro</button>

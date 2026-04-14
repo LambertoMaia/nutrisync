@@ -1,31 +1,37 @@
+import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { ScreenScaffold } from '@/components/layout';
+import { Button } from '@/components/ui/button';
+import { Routes } from '@/constants/routes';
+import { FontFamily, NutrilhoColors } from '@/constants/theme';
+
 export default function ExploreScreen() {
+  const router = useRouter();
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Explore</Text>
-      <Text style={styles.sub}>Placeholder — marketplace coming soon.</Text>
-    </View>
+    <ScreenScaffold
+      title="Explorar"
+      subtitle="Atalho para o marketplace de cozinheiros. Na Fase 4, este fluxo será integrado ao marketplace.">
+      <View style={styles.block}>
+        <Text style={styles.body}>
+          Use o botão abaixo para abrir a lista de cozinheiros (protótipo cozinheiros.html).
+        </Text>
+        <Button title="Ver cozinheiros" variant="primary" onPress={() => router.push(Routes.marketplace)} />
+      </View>
+    </ScreenScaffold>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#faf7f2',
+  block: {
+    gap: 16,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#1e1a12',
-  },
-  sub: {
+  body: {
+    fontFamily: FontFamily.sansRegular,
     fontSize: 14,
-    color: '#5a4e3a',
-    textAlign: 'center',
+    color: NutrilhoColors.textM,
+    lineHeight: 22,
+    marginBottom: 4,
   },
 });

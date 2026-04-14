@@ -1,37 +1,14 @@
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import {
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-/** Palette from web-prototype/styles.css */
-const C = {
-  green: '#4a7c2f',
-  greenD: '#2e5a18',
-  greenL: '#eaf2e0',
-  brownBtn: '#5c3d20',
-  beige: '#f5f0e8',
-  beigeD: '#ede5d4',
-  cream: '#faf7f2',
-  white: '#ffffff',
-  text: '#1e1a12',
-  textM: '#5a4e3a',
-  textL: '#8a7a65',
-};
-
-const serif = Platform.select({
-  ios: 'Georgia',
-  android: 'serif',
-  default: 'serif',
-});
+import { TopNav } from '@/components/layout';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Routes } from '@/constants/routes';
+import { FontFamily, NutrilhoColors, Spacing } from '@/constants/theme';
 
 const steps = [
   { num: '1', title: 'Crie sua conta', body: 'Cadastre perfil com objetivo e restrições alimentares.' },
@@ -39,20 +16,6 @@ const steps = [
   { num: '3', title: 'Cozinheiro monta', body: 'Profissional parceiro prepara conforme prescrito.' },
   { num: '4', title: 'Receba e avalie', body: 'Marmitas chegam prontas. Avalie e repita semanalmente.' },
 ];
-
-function LogoMark() {
-  return (
-    <View style={styles.logoMark}>
-      <View style={styles.logoIcon}>
-        <Text style={styles.logoIconGlyph}>🌿</Text>
-      </View>
-      <View>
-        <Text style={styles.logoName}>NutriSync</Text>
-        <Text style={styles.logoTag}>sua receita, nossa marmita</Text>
-      </View>
-    </View>
-  );
-}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -68,21 +31,18 @@ export default function HomeScreen() {
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.safeTop}>
-        <View style={styles.topnav}>
-          <LogoMark />
-          <View style={styles.navRight}>
-            <Pressable
-              onPress={() => tap()}
-              style={({ pressed }) => [styles.btnNav, styles.btnGhost, pressed && styles.pressed]}>
-              <Text style={styles.btnGhostText}>Entrar</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => tap()}
-              style={({ pressed }) => [styles.btnNav, styles.btnGreen, pressed && styles.pressed]}>
-              <Text style={styles.btnGreenText}>Cadastrar</Text>
-            </Pressable>
-          </View>
-        </View>
+        <TopNav
+          right={
+            <>
+              <Button title="Entrar" variant="ghost" onPress={() => tap(() => router.push(Routes.login))} />
+              <Button
+                title="Cadastrar"
+                variant="green"
+                onPress={() => tap(() => router.push(Routes.register))}
+              />
+            </>
+          }
+        />
       </SafeAreaView>
 
       <ScrollView
@@ -97,16 +57,20 @@ export default function HomeScreen() {
             <Text style={styles.heroTitleEm}>A gente entrega</Text>
             <Text style={styles.heroTitle}> a marmita.</Text>
           </Text>
-          <Text style={styles.heroP}>
-            Envie o plano do seu nutricionista e cozinheiros parceiros montam suas marmitas exatamente como
-            prescrito. Sem improvisar. Sem furar a dieta.
-          </Text>
-          <View style={styles.heroBtns}>
-            <Pressable
-              onPress={() => tap()}
-              style={({ pressed }) => [styles.btnPrimary, pressed && styles.pressed]}>
-              <Text style={styles.btnPrimaryText}>Quero pedir minhas marmitas</Text>
-            </Pressable>
+          <View style={styles.heroPWrap}>
+            <Text style={styles.heroP}>
+              Envie o plano do seu nutricionista e cozinheiros parceiros montam suas marmitas exatamente como
+              prescrito. Sem improvisar. Sem furar a dieta.
+            </Text>
+          </View>
+          <View style={styles.heroCtaWrap}>
+            <Button
+              title="Quero pedir minhas marmitas"
+              variant="primary"
+              onPress={() => tap(() => router.push(Routes.register))}
+              style={styles.heroCtaBtn}
+              textStyle={styles.heroCtaBtnText}
+            />
           </View>
         </View>
 
@@ -115,34 +79,16 @@ export default function HomeScreen() {
           <Text style={styles.secSub}>Do consultório à sua mesa em 4 passos</Text>
           <View style={styles.stepsGrid}>
             {steps.map((s) => (
-              <View key={s.num} style={[styles.stepCard, stepCardWidthStyle]}>
+              <Card key={s.num} style={[styles.stepCard, stepCardWidthStyle]}>
                 <View style={styles.stepNum}>
                   <Text style={styles.stepNumText}>{s.num}</Text>
                 </View>
                 <Text style={styles.stepTitle}>{s.title}</Text>
                 <Text style={styles.stepBody}>{s.body}</Text>
-              </View>
+              </Card>
             ))}
           </View>
         </View>
-
-        <View style={styles.ctaBand}>
-          <View style={styles.ctaInner}>
-            <View style={styles.ctaCopy}>
-              <Text style={styles.ctaKicker}>Não tem receita?</Text>
-              <Text style={styles.ctaHead}>Use nosso cardápio sugerido</Text>
-              <Text style={styles.ctaDesc}>
-                Planos de emagrecimento, hipertrofia ou manutenção — preparados por cozinheiros reais.
-              </Text>
-            </View>
-            <Pressable
-              onPress={() => tap()}
-              style={({ pressed }) => [styles.btnPrimary, styles.ctaBtn, pressed && styles.pressed]}>
-              <Text style={styles.btnPrimaryText}>Ver cardápios →</Text>
-            </Pressable>
-          </View>
-        </View>
-      {/* <View style={styles.bottomSpacer} /> */}
       </ScrollView>
     </View>
   );
@@ -151,100 +97,29 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: C.cream,
+    backgroundColor: NutrilhoColors.cream,
   },
   safeTop: {
-    backgroundColor: C.white,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: C.beigeD,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  topnav: {
-    height: 62,
-    paddingHorizontal: 19,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  logoMark: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-  },
-  logoIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: C.green,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoIconGlyph: {
-    fontSize: 18,
-  },
-  logoName: {
-    fontFamily: serif,
-    fontSize: 17,
-    fontWeight: '700',
-    color: C.greenD,
-    letterSpacing: -0.2,
-  },
-  logoTag: {
-    fontSize: 9,
-    fontWeight: '500',
-    color: C.textL,
-    letterSpacing: 0.7,
-    textTransform: 'uppercase',
-    marginTop: 1,
-  },
-  navRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  btnNav: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-  },
-  btnGhost: {
-    backgroundColor: 'transparent',
-  },
-  btnGhostText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: C.textM,
-  },
-  btnGreen: {
-    backgroundColor: C.green,
-  },
-  btnGreenText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#fff',
+    backgroundColor: NutrilhoColors.white,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: Spacing.xl,
   },
   hero: {
     paddingTop: 56,
     paddingBottom: 40,
-    paddingHorizontal: 21,
+    paddingHorizontal: Spacing.sectionPadX,
     alignItems: 'center',
-    backgroundColor: C.cream,
+    backgroundColor: NutrilhoColors.cream,
   },
   heroBadge: {
-    backgroundColor: C.greenL,
-    color: C.greenD,
+    fontFamily: FontFamily.sansSemiBold,
+    backgroundColor: NutrilhoColors.greenL,
+    color: NutrilhoColors.greenD,
     fontSize: 11,
-    fontWeight: '600',
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -260,87 +135,68 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   heroTitle: {
-    fontFamily: serif,
+    fontFamily: FontFamily.serifBold,
     fontSize: 28,
     fontWeight: '700',
-    color: C.text,
+    color: NutrilhoColors.text,
     lineHeight: 34,
   },
   heroTitleEm: {
-    fontFamily: serif,
+    fontFamily: FontFamily.serifBoldItalic,
     fontSize: 28,
-    fontWeight: '700',
     fontStyle: 'italic',
-    color: C.green,
+    fontWeight: '700',
+    color: NutrilhoColors.green,
     lineHeight: 34,
   },
-  heroP: {
-    fontSize: 14,
-    color: C.textM,
-    textAlign: 'center',
+  heroPWrap: {
+    width: '100%',
     maxWidth: 460,
+    alignSelf: 'center',
+    marginBottom: 8,
+  },
+  heroP: {
+    fontFamily: FontFamily.sansRegular,
+    fontSize: 14,
+    color: NutrilhoColors.textM,
+    textAlign: 'left',
     lineHeight: 24,
-    marginBottom: 28,
   },
-  heroBtns: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 9,
-    justifyContent: 'center',
+  heroCtaWrap: {
+    alignSelf: 'stretch',
+    maxWidth: 400,
+    width: '100%',
+    marginTop: 12,
   },
-  btnPrimary: {
-    backgroundColor: C.green,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    shadowColor: C.green,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 8,
-    elevation: 3,
+  heroCtaBtn: {
+    width: '100%',
+    paddingVertical: 17,
+    paddingHorizontal: 28,
+    borderRadius: 14,
   },
-  btnPrimaryText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  btnSecondary: {
-    backgroundColor: C.white,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: C.beigeD,
-    width: '65%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnSecondaryText: {
-    color: C.brownBtn,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  pressed: {
-    opacity: 0.88,
+  heroCtaBtnText: {
+    fontFamily: FontFamily.sansSemiBold,
+    fontSize: 16,
+    letterSpacing: 0.2,
   },
   section: {
     paddingVertical: 24,
-    paddingHorizontal: 21,
+    paddingHorizontal: Spacing.sectionPadX,
     maxWidth: 860,
     width: '100%',
     alignSelf: 'center',
   },
   secTitle: {
-    fontFamily: serif,
+    fontFamily: FontFamily.serifBold,
     fontSize: 22,
     fontWeight: '700',
-    color: C.text,
+    color: NutrilhoColors.text,
     marginBottom: 6,
   },
   secSub: {
+    fontFamily: FontFamily.sansRegular,
     fontSize: 13,
-    color: C.textL,
+    color: NutrilhoColors.textL,
     marginBottom: 22,
   },
   stepsGrid: {
@@ -349,12 +205,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   stepCard: {
-    minWidth: 160,
-    backgroundColor: C.white,
-    borderWidth: 1,
-    borderColor: C.beigeD,
-    borderRadius: 14,
-    padding: 18,
+    marginBottom: 0,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
   },
   stepCardFull: {
     width: '100%',
@@ -367,69 +220,26 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: C.green,
+    backgroundColor: NutrilhoColors.green,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 11,
   },
   stepNumText: {
-    color: '#fff',
+    fontFamily: FontFamily.sansBold,
+    color: NutrilhoColors.white,
     fontSize: 12,
-    fontWeight: '700',
   },
   stepTitle: {
+    fontFamily: FontFamily.sansSemiBold,
     fontSize: 13,
-    fontWeight: '600',
-    color: C.text,
+    color: NutrilhoColors.text,
     marginBottom: 6,
   },
   stepBody: {
+    fontFamily: FontFamily.sansRegular,
     fontSize: 12,
-    color: C.textM,
+    color: NutrilhoColors.textM,
     lineHeight: 19,
-  },
-  ctaBand: {
-    backgroundColor: C.greenL,
-    paddingVertical: 29,
-    paddingHorizontal: 21,
-  },
-  ctaInner: {
-    maxWidth: 860,
-    alignSelf: 'center',
-    width: '100%',
-    gap: 14,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-  },
-  ctaCopy: {
-    flex: 1,
-    minWidth: 220,
-  },
-  ctaKicker: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: C.green,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: 6,
-  },
-  ctaHead: {
-    fontFamily: serif,
-    fontSize: 19,
-    fontWeight: '700',
-    color: C.text,
-    marginBottom: 6,
-  },
-  ctaDesc: {
-    fontSize: 13,
-    color: C.textM,
-    lineHeight: 21,
-  },
-  ctaBtn: {
-    alignSelf: 'flex-start',
-  },
-  bottomSpacer: {
-    height: 24,
   },
 });
