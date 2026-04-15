@@ -1,17 +1,17 @@
 const pageMap = {
-  's-home': 'index.html',
-  's-cadastro': 'cadastro.html',
-  's-login': 'login.html',
-  's-home-user': 'home-user.html',
-  's-enviar-receita': 'enviar-receita.html',
-  's-cozinheiros': 'cozinheiros.html',
-  's-confirmar': 'confirmar.html',
-  's-status': 'status.html',
-  's-painel-cook': 'painel-cozinheiro.html',
-  's-pedidos': 'meus-pedidos.html',
-  's-avaliacao': 'avaliacao.html',
-  's-perfil': 'perfil.html',
-  's-sem-receita': 'cardapios.html'
+  's-home': '/',
+  's-cadastro': '/cadastro',
+  's-login': '/login',
+  's-home-user': '/home-user',
+  's-enviar-receita': '/enviar-receita',
+  's-cozinheiros': '/cozinheiros',
+  's-confirmar': '/confirmar',
+  's-status': '/status',
+  's-painel-cook': '/painel-cozinheiro',
+  's-pedidos': '/meus-pedidos',
+  's-avaliacao': '/avaliacao',
+  's-perfil': '/perfil',
+  's-sem-receita': '/cardapios'
 };
 
 function go(id){
