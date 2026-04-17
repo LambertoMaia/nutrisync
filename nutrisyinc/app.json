@@ -1,11 +1,7 @@
 {
   "expo": {
     "name": "Nutrilho",
-<<<<<<< Updated upstream
     "slug": "nutrisyinc",
-=======
-    "slug": "nutrilho",
->>>>>>> Stashed changes
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
