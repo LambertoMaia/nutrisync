@@ -38,6 +38,10 @@ yarn-error.*
 .cursor/
 .vscode/
 
+# IA
+GEMINI.md
+IMPLEMENTATION_PLAN.md
+
 # typescript
 *.tsbuildinfo
 
