@@ -37,6 +37,10 @@ yarn-error.*
 # Cursor (local IDE / workspace)
 .cursor/
 
+# IA
+GEMINI.md
+IMPLEMENTATION_PLAN.md
+
 # typescript
 *.tsbuildinfo
 
