@@ -1,5 +1,5 @@
 /**
- * HTTP API for the Flask backend (`backend/src/app.py`).
+ * HTTP API for the Flask backend (nutrilho repo: `src/app.py`).
  *
  * **Recommended (phone + PC without LAN hassle):** run Flask locally, expose it with **ngrok**
  * (`ngrok http 5000`), then set in `.env`:
@@ -70,6 +70,8 @@ export type RegisterCozinheiroPayload = {
   complemento: string;
   especialidades: string[];
   sobre_voce: string;
+  /** Alinhado a `nutrilho` `validation._build_cozinheiro_cadastro` — opcional (padrão no servidor: null). */
+  tipo_entrega?: 'delivery' | 'retirada' | 'ambos';
 };
 
 export type RegisterSuccessJson = {
@@ -245,6 +247,26 @@ export type SolicitacaoClienteJson = {
 
 export type HomePedidoItem = SolicitacaoClienteJson | (PedidoClienteAtivoJson & { tipo: 'pedido' });
 
+/** `GET /api/pedidos/cozinheiro/<id>` — painel do cozinheiro. */
+export type PedidoCozinheiroJson = {
+  id: number;
+  cliente_nome: string;
+  cliente_id: number;
+  status: string;
+  data: string;
+  qtd_marmitas: number;
+  valor_total: number;
+  avaliacao: number;
+  proposta_id: number | null;
+  proposta: {
+    id: number;
+    valor: number;
+    status?: string;
+    receita_link: string | null;
+  } | null;
+  endereco_entrega: string;
+};
+
 export async function verificarLoginApi(): Promise<VerificarLoginJson | null> {
   try {
     const { res, rawText } = await getJsonRaw('/api/verificar-login');
@@ -297,6 +319,58 @@ export async function fetchPedidosClienteTodosApi(
     return {
       ok: false,
       error: (data as { error?: string }).error || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+export async function fetchPedidosCozinheiroApi(
+  cozinheiroId: number,
+): Promise<{ ok: true; pedidos: PedidoCozinheiroJson[] } | { ok: false; error: string }> {
+  try {
+    const { res, rawText } = await getJsonRaw(`/api/pedidos/cozinheiro/${cozinheiroId}`);
+    if (res.ok) {
+      try {
+        const parsed = JSON.parse(rawText) as unknown;
+        if (Array.isArray(parsed)) {
+          return { ok: true, pedidos: parsed as PedidoCozinheiroJson[] };
+        }
+      } catch {
+        /* fallthrough */
+      }
+      return { ok: false, error: 'Resposta inválida do servidor.' };
+    }
+    const { data } = parseJsonBody<{ error?: string }>(rawText, res.status);
+    return {
+      ok: false,
+      error: (data as { error?: string }).error || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+export async function putPedidoStatusApi(
+  pedidoId: number,
+  status: string,
+): Promise<{ ok: true; status: string } | { ok: false; error: string }> {
+  try {
+    const { res, rawText } = await putJsonRaw(`/api/pedidos/${pedidoId}/status`, { status });
+    const { data, parseNote } = parseJsonBody<{
+      success?: boolean;
+      status?: string;
+      error?: string;
+    }>(rawText, res.status);
+    if (res.ok && data && typeof data === 'object' && (data as { success?: boolean }).success === true) {
+      return { ok: true, status: String((data as { status?: string }).status ?? status) };
+    }
+    return {
+      ok: false,
+      error:
+        (typeof (data as { error?: string }).error === 'string' && (data as { error: string }).error) ||
+        parseNote ||
+        `HTTP ${res.status}`,
     };
   } catch (e) {
     return { ok: false, error: getNetworkFailureMessage(e) };
@@ -423,52 +497,15 @@ export async function criarSolicitacaoApi(
   }
 }
 
-export type DemoPropostaJson = {
-  success: boolean;
-  ja_existia?: boolean;
-  cozinheiro_nome?: string;
-  valor?: number;
-  base_valor?: number;
-  tipo_entrega?: string;
-  opciones_entrega?: { id: string; label: string; taxa: number; estimativa?: boolean }[];
-  es_demo?: boolean;
-  proposta_id?: number;
-  tempo_preparo_label?: string;
-  cozinheiro_especialidade?: string;
-  cozinheiro_nota?: number;
-  cozinheiro_resposta_tempo?: string;
-  cozinheiro_sobre?: string;
-  retirada_endereco?: string;
-  entrega_endereco_cliente?: string;
-  error?: string;
-  /** Machine-readable reason when HTTP 4xx (e.g. NO_COZINHEIRO, SOLICITACAO_CONVERTIDA). */
-  error_code?: string;
-};
-
-export async function gerarDemoPropostaApi(
-  solicitacaoId: number,
-): Promise<{ ok: true; data: DemoPropostaJson } | { ok: false; error: string }> {
-  try {
-    const { res, rawText } = await postJsonRaw(`/api/solicitacoes/${solicitacaoId}/demo-proposta`, {});
-    const { data } = parseJsonBody<DemoPropostaJson>(rawText, res.status);
-    if (res.ok && data.success) {
-      return { ok: true, data };
-    }
-    return { ok: false, error: data.error || `HTTP ${res.status}` };
-  } catch (e) {
-    return { ok: false, error: getNetworkFailureMessage(e) };
-  }
-}
-
 export async function responderPropostaClienteApi(
   propostaId: number,
   aceitar: boolean,
-  opts?: { demoEntregaOpcao?: string },
+  opts?: { entregaOpcao?: string },
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   try {
     const body: Record<string, unknown> = { aceitar };
-    if (opts?.demoEntregaOpcao) {
-      body.demo_entrega_opcao = opts.demoEntregaOpcao;
+    if (opts?.entregaOpcao) {
+      body.entrega_opcao = opts.entregaOpcao;
     }
     const { res, rawText } = await postJsonRaw(`/api/propostas/${propostaId}/responder-cliente`, body);
     const { data } = parseJsonBody<{ success?: boolean; error?: string }>(rawText, res.status);
@@ -522,6 +559,38 @@ export async function deletePedidoClienteApi(
   }
 }
 
+/**
+ * Avalia um pedido entregue (`pode_avaliar` no histórico). Contrato esperado no Flask: **`POST /api/pedidos/<id>/avaliar`**
+ * com JSON **`{ avaliacao: number }`** (nota 1–5). Se o backend usar outro path ou campo, alinhar **`lib/api.ts`** e **`IMPLEMENTATION_PLAN.md`**.
+ */
+export async function avaliarPedidoClienteApi(
+  pedidoId: number,
+  avaliacao: number,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const nota = Math.round(avaliacao);
+  if (nota < 1 || nota > 5) {
+    return { ok: false, error: 'A nota deve ser entre 1 e 5.' };
+  }
+  try {
+    const { res, rawText } = await postJsonRaw(`/api/pedidos/${pedidoId}/avaliar`, { avaliacao: nota });
+    if (res.ok) {
+      if (!rawText?.trim()) {
+        return { ok: true };
+      }
+      const { data } = parseJsonBody<{ success?: boolean; error?: string }>(rawText, res.status);
+      const d = data as { success?: boolean; error?: string } | null;
+      if (d && d.success === false) {
+        return { ok: false, error: d.error || `HTTP ${res.status}` };
+      }
+      return { ok: true };
+    }
+    const { data } = parseJsonBody<{ error?: string }>(rawText, res.status);
+    return { ok: false, error: (data as { error?: string })?.error || `HTTP ${res.status}` };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
 export async function logoutApi(): Promise<boolean> {
   try {
     const { res } = await postJsonRaw('/api/logout', {});
@@ -535,6 +604,18 @@ async function postJsonRaw(path: string, body: unknown): Promise<{ res: Response
   const url = `${getApiBaseUrl()}${path}`;
   const res = await fetch(url, {
     method: 'POST',
+    headers: getApiJsonHeaders(),
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+  const rawText = await res.text();
+  return { res, rawText };
+}
+
+async function putJsonRaw(path: string, body: unknown): Promise<{ res: Response; rawText: string }> {
+  const url = `${getApiBaseUrl()}${path}`;
+  const res = await fetch(url, {
+    method: 'PUT',
     headers: getApiJsonHeaders(),
     credentials: 'include',
     body: JSON.stringify(body),

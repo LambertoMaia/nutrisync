@@ -20,7 +20,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 
 import { FormField } from '@/components/prototype/FormField';
@@ -32,9 +32,12 @@ type OpMode = 'foto' | 'form';
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'application/pdf']);
+/** API still expects `porcoes_por_refeicao`; UI usar uma porção por refeição (padrão). */
+const DEFAULT_PORCOES_POR_REFEICAO = '1';
 
 export default function EnviarReceitaScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, loading: authLoading } = useAuth();
   const [op, setOp] = useState<OpMode>('foto');
   const [submitting, setSubmitting] = useState(false);
@@ -45,13 +48,12 @@ export default function EnviarReceitaScreen() {
     mimeType?: string | null;
   } | null>(null);
 
+  const [qtdDias, setQtdDias] = useState('');
   const [refeicoesPorDia, setRefeicoesPorDia] = useState('');
   const [calorias, setCalorias] = useState('');
   const [restricoes, setRestricoes] = useState('');
   const [alimentosProibidos, setAlimentosProibidos] = useState('');
   const [obsNutri, setObsNutri] = useState('');
-  const [qtdDias, setQtdDias] = useState('');
-  const [porcoes, setPorcoes] = useState('');
   const [obsExtra, setObsExtra] = useState('');
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
 
@@ -110,6 +112,27 @@ export default function EnviarReceitaScreen() {
   }, [picked]);
 
   const fazerPedido = useCallback(async () => {
+    const qDias = qtdDias.trim();
+    if (!qDias) {
+      Alert.alert('Campo obrigatório', 'Informe para quantos dias é o pedido.');
+      return;
+    }
+    if (!refeicoesPorDia.trim()) {
+      Alert.alert('Campo obrigatório', 'Informe quantas refeições por dia.');
+      return;
+    }
+    if (op === 'foto' && !picked) {
+      Alert.alert(
+        'Arquivo obrigatório',
+        'Selecione uma foto ou um PDF da receita antes de enviar o pedido.',
+      );
+      return;
+    }
+    if (op === 'form' && !calorias.trim()) {
+      Alert.alert('Campo obrigatório', 'Informe as calorias diárias.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const result = await criarSolicitacaoApi({
@@ -119,8 +142,8 @@ export default function EnviarReceitaScreen() {
         restricoes: restricoes.trim(),
         alimentos_proibidos: alimentosProibidos.trim(),
         observacoes_nutricionista: obsNutri.trim(),
-        qtd_dias: qtdDias.trim(),
-        porcoes_por_refeicao: porcoes.trim(),
+        qtd_dias: qDias,
+        porcoes_por_refeicao: DEFAULT_PORCOES_POR_REFEICAO,
         observacoes_adicionais: obsExtra.trim(),
         file: picked
           ? { uri: picked.uri, name: picked.name, mimeType: picked.mimeType ?? undefined }
@@ -143,7 +166,6 @@ export default function EnviarReceitaScreen() {
     alimentosProibidos,
     obsNutri,
     qtdDias,
-    porcoes,
     obsExtra,
     picked,
     router,
@@ -159,6 +181,30 @@ export default function EnviarReceitaScreen() {
 
   const isPdf = picked?.mimeType === 'application/pdf' || picked?.name.toLowerCase().endsWith('.pdf');
   const showImagePreview = picked && !isPdf;
+
+  const planoMarmitas = (
+    <View style={styles.planSection}>
+      <Text style={styles.sectionTitle}>Plano de marmitas</Text>
+      <Text style={styles.sectionSub}>Duração do pedido e quantas refeições entram em cada dia.</Text>
+      <FormField
+        label="Para quantos dias?"
+        required
+        placeholder="Ex.: 5"
+        keyboardType="number-pad"
+        value={qtdDias}
+        onChangeText={setQtdDias}
+      />
+      <FormField
+        label="Quantas refeições por dia?"
+        required
+        placeholder="Ex.: 4"
+        keyboardType="number-pad"
+        value={refeicoesPorDia}
+        onChangeText={setRefeicoesPorDia}
+      />
+      <Text style={styles.fieldHint}>Ex.: café da manhã, almoço, lanche e jantar</Text>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -207,53 +253,90 @@ export default function EnviarReceitaScreen() {
         </View>
 
         {op === 'foto' ? (
-          <View style={styles.areaBlock}>
-            {!picked ? (
-              <>
-                <Pressable
-                  onPress={() => tap(() => void pickFile())}
-                  style={({ pressed }) => [styles.uploadBox, pressed && styles.pressed]}>
-                  <Text style={styles.uploadGlyph}>🖼</Text>
-                  <Text style={styles.uploadMain}>Toque para selecionar a foto</Text>
-                  <Text style={styles.uploadHint}>JPG, PNG ou PDF — até 10MB</Text>
-                </Pressable>
-                <Text style={styles.uploadFoot}>A foto vai diretamente para o cozinheiro escolhido</Text>
-              </>
-            ) : (
-              <View style={styles.previewCard}>
-                {showImagePreview ? (
-                  <Image source={{ uri: picked.uri }} style={styles.previewImg} contentFit="contain" />
-                ) : (
-                  <View style={styles.pdfBox}>
-                    <Text style={styles.pdfIcon}>📄</Text>
-                    <Text style={styles.pdfName} numberOfLines={2}>
-                      {picked.name}
+          <>
+            <View style={styles.areaBlock}>
+              {!picked ? (
+                <>
+                  <Pressable
+                    onPress={() => tap(() => void pickFile())}
+                    style={({ pressed }) => [styles.uploadBox, pressed && styles.pressed]}>
+                    <Text style={styles.uploadGlyph}>🖼</Text>
+                    <Text style={styles.uploadMain}>Toque para selecionar a foto</Text>
+                    <Text style={styles.uploadHint}>
+                      JPG, PNG ou PDF — até 10MB{' '}
+                      <Text style={styles.labelRequiredStar}>*</Text>
                     </Text>
-                    <Text style={styles.pdfHint}>PDF</Text>
-                    <Pressable
-                      onPress={() => tap(() => setPdfPreviewOpen(true))}
-                      style={({ pressed }) => [styles.pdfViewBtn, pressed && styles.pressed]}>
-                      <MaterialIcons name="picture-as-pdf" size={20} color={P.greenD} />
-                      <Text style={styles.pdfViewBtnText}>Visualizar documento</Text>
-                    </Pressable>
-                  </View>
-                )}
-                <Pressable
-                  onPress={() => tap(() => clearFile())}
-                  style={({ pressed }) => [styles.removeBtn, pressed && styles.pressed]}>
-                  <Text style={styles.removeBtnText}>Remover arquivo</Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        ) : (
-          <View style={styles.areaBlock}>
-            <FormField label="Refeições por dia" placeholder="Ex.: 3" value={refeicoesPorDia} onChangeText={setRefeicoesPorDia} />
-            <FormField label="Calorias diárias" placeholder="Ex: 1800" keyboardType="numeric" value={calorias} onChangeText={setCalorias} />
-            <FormField label="Restrições e alergias" placeholder="Ex: sem lactose, sem glúten" value={restricoes} onChangeText={setRestricoes} />
-            <FormField label="Alimentos proibidos" placeholder="Ex: amendoim, frutos do mar" value={alimentosProibidos} onChangeText={setAlimentosProibidos} />
+                  </Pressable>
+                  <Text style={styles.uploadFoot}>
+                    Neste modo você precisa enviar um arquivo para concluir o pedido. A receita vai para o cozinheiro
+                    escolhido.
+                  </Text>
+                </>
+              ) : (
+                <View style={styles.previewCard}>
+                  {showImagePreview ? (
+                    <Image source={{ uri: picked.uri }} style={styles.previewImg} contentFit="contain" />
+                  ) : (
+                    <View style={styles.pdfBox}>
+                      <Text style={styles.pdfIcon}>📄</Text>
+                      <Text style={styles.pdfName} numberOfLines={2}>
+                        {picked.name}
+                      </Text>
+                      <Text style={styles.pdfHint}>PDF</Text>
+                      <Pressable
+                        onPress={() => tap(() => setPdfPreviewOpen(true))}
+                        style={({ pressed }) => [styles.pdfViewBtn, pressed && styles.pressed]}>
+                        <MaterialIcons name="picture-as-pdf" size={20} color={P.greenD} />
+                        <Text style={styles.pdfViewBtnText}>Visualizar documento</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                  <Pressable
+                    onPress={() => tap(() => clearFile())}
+                    style={({ pressed }) => [styles.removeBtn, pressed && styles.pressed]}>
+                    <Text style={styles.removeBtnText}>Remover arquivo</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
+            {planoMarmitas}
             <View style={styles.fieldWrap}>
-              <Text style={styles.fieldLabel}>Observações do nutricionista</Text>
+              <Text style={styles.fieldLabel}>Observações adicionais (opcional)</Text>
+              <TextInput
+                placeholder="Ex: sem pimenta, prefiro frango grelhado..."
+                placeholderTextColor={P.textL}
+                style={styles.textarea}
+                multiline
+                value={obsExtra}
+                onChangeText={setObsExtra}
+              />
+            </View>
+          </>
+        ) : (
+          <>
+            {planoMarmitas}
+            <FormField
+              label="Calorias diárias"
+              required
+              placeholder="Ex: 1800"
+              keyboardType="numeric"
+              value={calorias}
+              onChangeText={setCalorias}
+            />
+            <FormField
+              label="Restrições e alergias (opcional)"
+              placeholder="Ex: sem lactose, sem glúten"
+              value={restricoes}
+              onChangeText={setRestricoes}
+            />
+            <FormField
+              label="Alimentos proibidos (opcional)"
+              placeholder="Ex: amendoim, frutos do mar"
+              value={alimentosProibidos}
+              onChangeText={setAlimentosProibidos}
+            />
+            <View style={styles.fieldWrap}>
+              <Text style={styles.fieldLabel}>Observações do nutricionista (opcional)</Text>
               <TextInput
                 placeholder="Cole aqui as orientações específicas..."
                 placeholderTextColor={P.textL}
@@ -263,24 +346,19 @@ export default function EnviarReceitaScreen() {
                 onChangeText={setObsNutri}
               />
             </View>
-          </View>
+            <View style={styles.fieldWrap}>
+              <Text style={styles.fieldLabel}>Observações adicionais (opcional)</Text>
+              <TextInput
+                placeholder="Ex: sem pimenta, prefiro frango grelhado..."
+                placeholderTextColor={P.textL}
+                style={styles.textarea}
+                multiline
+                value={obsExtra}
+                onChangeText={setObsExtra}
+              />
+            </View>
+          </>
         )}
-
-        <View style={styles.divider} />
-
-        <FormField label="Quantidade de dias" placeholder="Ex.: 5" value={qtdDias} onChangeText={setQtdDias} />
-        <FormField label="Porções por refeição" placeholder="Ex.: 1" value={porcoes} onChangeText={setPorcoes} />
-        <View style={styles.fieldWrap}>
-          <Text style={styles.fieldLabel}>Observações adicionais (opcional)</Text>
-          <TextInput
-            placeholder="Ex: sem pimenta, prefiro frango grelhado..."
-            placeholderTextColor={P.textL}
-            style={styles.textarea}
-            multiline
-            value={obsExtra}
-            onChangeText={setObsExtra}
-          />
-        </View>
 
         <Pressable
           onPress={() => tap(() => void fazerPedido())}
@@ -299,7 +377,16 @@ export default function EnviarReceitaScreen() {
         animationType="slide"
         presentationStyle="fullScreen"
         onRequestClose={() => setPdfPreviewOpen(false)}>
-        <SafeAreaView style={styles.pdfModalSafe} edges={['top', 'bottom']}>
+        <View
+          style={[
+            styles.pdfModalSafe,
+            {
+              paddingTop: insets.top,
+              paddingBottom: insets.bottom,
+              paddingLeft: insets.left,
+              paddingRight: insets.right,
+            },
+          ]}>
           <View style={styles.pdfModalHeader}>
             <Pressable
               onPress={() => tap(() => setPdfPreviewOpen(false))}
@@ -350,7 +437,7 @@ export default function EnviarReceitaScreen() {
               />
             )
           ) : null}
-        </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -420,6 +507,30 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     lineHeight: 20,
   },
+  planSection: {
+    marginBottom: 8,
+    paddingTop: 4,
+  },
+  sectionTitle: {
+    fontFamily: fontSerif,
+    fontSize: 17,
+    fontWeight: '700',
+    color: P.text,
+    marginBottom: 4,
+  },
+  sectionSub: {
+    fontSize: 12,
+    color: P.textL,
+    marginBottom: 14,
+    lineHeight: 18,
+  },
+  fieldHint: {
+    fontSize: 12,
+    color: P.textM,
+    marginTop: -10,
+    marginBottom: 12,
+    lineHeight: 17,
+  },
   opRow: {
     flexDirection: 'row',
     gap: 9,
@@ -457,7 +568,7 @@ const styles = StyleSheet.create({
     color: P.textL,
   },
   areaBlock: {
-    marginBottom: 4,
+    marginBottom: 16,
   },
   uploadBox: {
     borderWidth: 1.5,
@@ -482,6 +593,11 @@ const styles = StyleSheet.create({
   uploadHint: {
     fontSize: 12,
     color: P.textL,
+  },
+  labelRequiredStar: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: P.errorText,
   },
   uploadFoot: {
     fontSize: 11,
@@ -548,10 +664,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
+    minHeight: 48,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: P.beigeD,
     backgroundColor: P.white,
+    zIndex: 10,
+    elevation: 6,
   },
   pdfModalClose: {
     paddingVertical: 6,
@@ -641,11 +760,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: P.text,
     textAlignVertical: 'top',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: P.beigeD,
-    marginVertical: 18,
   },
   btnPrimary: {
     marginTop: 8,

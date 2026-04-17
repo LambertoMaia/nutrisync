@@ -110,7 +110,12 @@ export default function MeusPedidosScreen() {
             <Text style={styles.menuTitle}>Conta</Text>
             <Pressable
               style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
-              onPress={() => tap(() => setMenuOpen(false))}>
+              onPress={() =>
+                tap(() => {
+                  setMenuOpen(false);
+                  router.push('/(user)/perfil');
+                })
+              }>
               <MaterialIcons name="person-outline" size={22} color={P.textM} />
               <Text style={styles.menuRowText}>Meu perfil</Text>
             </Pressable>
@@ -158,7 +163,16 @@ export default function MeusPedidosScreen() {
               return (
                 <Pressable
                   key={p.id}
-                  onPress={() => tap(() => {})}
+                  onPress={() =>
+                    tap(() => {
+                      if (p.status === 'entregue') {
+                        router.push({
+                          pathname: '/(user)/receitas-enviadas',
+                          params: p.pode_avaliar ? { avaliar: String(p.id) } : {},
+                        });
+                      }
+                    })
+                  }
                   style={({ pressed }) => [styles.pedidoCard, pressed && styles.pressed]}>
                   <View style={styles.pedidoHeader}>
                     <View style={styles.pedidoHeaderText}>
@@ -217,7 +231,7 @@ export default function MeusPedidosScreen() {
             <MaterialIcons name="receipt-long" size={20} color={P.green} />
             <Text style={[styles.bnavLabel, styles.bnavLabelOn]}>Pedidos</Text>
           </View>
-          <Pressable onPress={() => tap(() => setMenuOpen(true))} style={styles.bnavItem}>
+          <Pressable onPress={() => tap(() => router.push('/(user)/perfil'))} style={styles.bnavItem}>
             <MaterialIcons name="person-outline" size={20} color={P.textL} />
             <Text style={styles.bnavLabel}>Perfil</Text>
           </Pressable>

@@ -26,17 +26,15 @@ import {
   deletePedidoClienteApi,
   deleteSolicitacaoApi,
   fetchClienteHomePedidosApi,
+  fetchPedidosClienteTodosApi,
   fetchPerfilClienteApi,
-  gerarDemoPropostaApi,
   responderPropostaClienteApi,
   type PedidoClienteAtivoJson,
+  type PedidoClienteHistoricoJson,
   type SolicitacaoClienteJson,
 } from '@/lib/api';
 import { firstName, initialFromName } from '@/lib/name';
 import { fontSerif, P, radius } from '@/constants/prototypeTheme';
-
-/** Delay before calling demo proposta API (must not cancel on `solicitacoes` refetch). */
-const DEMO_MODAL_DELAY_MS = 1800;
 
 const COOKS = [
   {
@@ -63,13 +61,13 @@ type MergedRow =
   | { kind: 'solicitacao'; item: SolicitacaoClienteJson }
   | { kind: 'pedido'; item: PedidoClienteAtivoJson };
 
-type DemoEntregaOpcao = { id: string; label: string; taxa: number; estimativa?: boolean };
+type EntregaOpcao = { id: string; label: string; taxa: number; estimativa?: boolean };
 
-type DemoModalState = {
+type PropostaModalState = {
   propostaId: number;
   cozinheiroNome: string;
   baseValor: number;
-  opcionesEntrega: DemoEntregaOpcao[];
+  opcionesEntrega: EntregaOpcao[];
   selectedEntregaId: string;
   tipoEntrega: string;
   cozinheiroEspecialidade: string;
@@ -117,7 +115,7 @@ function iconForEntregaOpcao(id: string): ComponentProps<typeof MaterialIcons>['
   return m[id] ?? 'local-shipping';
 }
 
-function taxaResumoLinha(op: DemoEntregaOpcao): string {
+function taxaResumoLinha(op: EntregaOpcao): string {
   if (op.estimativa && op.taxa > 0) {
     return `Estimativa + R$ ${op.taxa.toFixed(2)}`;
   }
@@ -146,15 +144,11 @@ export default function HomeUserScreen() {
   const [pedidos, setPedidos] = useState<PedidoClienteAtivoJson[]>([]);
   const [pedidosLoading, setPedidosLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [demoModal, setDemoModal] = useState<DemoModalState | null>(null);
+  const [propostaModal, setPropostaModal] = useState<PropostaModalState | null>(null);
   const [deliveryPickerOpen, setDeliveryPickerOpen] = useState(false);
-  /** Active timeouts per solicitação — NOT cleared when `solicitacoes` refetches (avoids cancel + stale "scheduled" guard). */
-  const demoTimerByIdRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
-  /** After we attempted demo API for this id (success or fail), don't schedule again. */
-  const demoFinishedRef = useRef<Set<number>>(new Set());
-  /** Latest list for timer callbacks (avoid POST after aceitar / estado mudou). */
-  const solicitacoesRef = useRef(solicitacoes);
-  solicitacoesRef.current = solicitacoes;
+  /** Sessão: pedidos cujo lembrete de avaliação o utilizador já dispensou (Fechar) ou já abriu no histórico (Avaliar). */
+  const ratingDismissedRef = useRef<Set<number>>(new Set());
+  const [ratingNudge, setRatingNudge] = useState<PedidoClienteHistoricoJson | null>(null);
 
   const tap = useCallback((fn: () => void) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -173,8 +167,13 @@ export default function HomeUserScreen() {
   }, [authLoading, user, router]);
 
   useEffect(() => {
-    if (demoModal == null) setDeliveryPickerOpen(false);
-  }, [demoModal]);
+    if (propostaModal == null) setDeliveryPickerOpen(false);
+  }, [propostaModal]);
+
+  useEffect(() => {
+    ratingDismissedRef.current.clear();
+    setRatingNudge(null);
+  }, [user?.id]);
 
   const loadPerfil = useCallback(async () => {
     const res = await fetchPerfilClienteApi();
@@ -204,6 +203,24 @@ export default function HomeUserScreen() {
     }
   }, []);
 
+  const checkRatingNudge = useCallback(async () => {
+    if (!user || user.tipo !== 'cliente') return;
+    try {
+      const res = await fetchPedidosClienteTodosApi(user.id);
+      if (!res.ok) {
+        setRatingNudge(null);
+        return;
+      }
+      const next = res.pedidos.find(
+        (p) =>
+          p.status === 'entregue' && p.pode_avaliar && !ratingDismissedRef.current.has(p.id),
+      );
+      setRatingNudge(next ?? null);
+    } catch {
+      setRatingNudge(null);
+    }
+  }, [user]);
+
   const mergedRows = useMemo(() => {
     type Row =
       | { kind: 'solicitacao'; item: SolicitacaoClienteJson }
@@ -222,81 +239,20 @@ export default function HomeUserScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!user || user.tipo !== 'cliente') return;
-      void loadPerfil();
-      void loadHomePedidos();
-    }, [user, loadPerfil, loadHomePedidos]),
+      void (async () => {
+        await loadPerfil();
+        await loadHomePedidos();
+        await checkRatingNudge();
+      })();
+    }, [user, loadPerfil, loadHomePedidos, checkRatingNudge]),
   );
-
-  useEffect(() => {
-    return () => {
-      demoTimerByIdRef.current.forEach((tid) => clearTimeout(tid));
-      demoTimerByIdRef.current.clear();
-    };
-  }, []);
-
-  useEffect(() => {
-    const eligible = solicitacoes.filter(
-      (s) =>
-        s.situacao === 'aguardando_cozinheiro' &&
-        !s.proposta_pendente &&
-        !s.demo_convite_recusado,
-    );
-    const eligibleIds = new Set(eligible.map((s) => s.id));
-
-    for (const [id, tid] of [...demoTimerByIdRef.current.entries()]) {
-      if (!eligibleIds.has(id)) {
-        clearTimeout(tid);
-        demoTimerByIdRef.current.delete(id);
-      }
-    }
-
-    for (const s of eligible) {
-      if (demoFinishedRef.current.has(s.id)) continue;
-      if (demoTimerByIdRef.current.has(s.id)) continue;
-
-      const sid = s.id;
-      const tid = setTimeout(() => {
-        demoTimerByIdRef.current.delete(sid);
-        void (async () => {
-          const row = solicitacoesRef.current.find((x) => x.id === sid);
-          if (
-            !row ||
-            row.situacao !== 'aguardando_cozinheiro' ||
-            row.proposta_pendente ||
-            row.demo_convite_recusado
-          ) {
-            return;
-          }
-          try {
-            const r = await gerarDemoPropostaApi(sid);
-            if (r.ok && r.data.success && r.data.proposta_id != null) {
-              const opciones = r.data.opciones_entrega ?? [];
-              setDemoModal({
-                propostaId: r.data.proposta_id,
-                cozinheiroNome: r.data.cozinheiro_nome ?? 'Cozinheiro',
-                baseValor: r.data.base_valor ?? r.data.valor ?? 0,
-                opcionesEntrega: opciones,
-                selectedEntregaId: opciones[0]?.id ?? 'retirada',
-                tipoEntrega: r.data.tipo_entrega ?? '',
-                ...mapPropostaExtras(r.data),
-              });
-              await loadHomePedidos();
-            }
-          } finally {
-            demoFinishedRef.current.add(sid);
-          }
-        })();
-      }, DEMO_MODAL_DELAY_MS);
-      demoTimerByIdRef.current.set(sid, tid);
-    }
-  }, [solicitacoes, loadHomePedidos]);
 
   const abrirModalProposta = useCallback(
     (s: SolicitacaoClienteJson) => {
       const p = s.proposta_pendente;
       if (!p) return;
       const opciones = p.opciones_entrega ?? [];
-      setDemoModal({
+      setPropostaModal({
         propostaId: p.id,
         cozinheiroNome: p.cozinheiro_nome,
         baseValor: p.base_valor ?? p.valor,
@@ -309,49 +265,49 @@ export default function HomeUserScreen() {
     [],
   );
 
-  const demoModalTotal = useMemo(() => {
-    if (!demoModal) return 0;
-    if (demoModal.opcionesEntrega.length === 0) return demoModal.baseValor;
+  const propostaModalTotal = useMemo(() => {
+    if (!propostaModal) return 0;
+    if (propostaModal.opcionesEntrega.length === 0) return propostaModal.baseValor;
     const taxa =
-      demoModal.opcionesEntrega.find((o) => o.id === demoModal.selectedEntregaId)?.taxa ?? 0;
-    return demoModal.baseValor + taxa;
-  }, [demoModal]);
+      propostaModal.opcionesEntrega.find((o) => o.id === propostaModal.selectedEntregaId)?.taxa ?? 0;
+    return propostaModal.baseValor + taxa;
+  }, [propostaModal]);
 
-  const demoModalTaxa = useMemo(() => {
-    if (!demoModal || demoModal.opcionesEntrega.length === 0) return 0;
-    return demoModal.opcionesEntrega.find((o) => o.id === demoModal.selectedEntregaId)?.taxa ?? 0;
-  }, [demoModal]);
+  const propostaModalTaxa = useMemo(() => {
+    if (!propostaModal || propostaModal.opcionesEntrega.length === 0) return 0;
+    return propostaModal.opcionesEntrega.find((o) => o.id === propostaModal.selectedEntregaId)?.taxa ?? 0;
+  }, [propostaModal]);
 
-  const demoModalEntregaOp = useMemo(() => {
-    if (!demoModal || demoModal.opcionesEntrega.length === 0) return undefined;
-    return demoModal.opcionesEntrega.find((o) => o.id === demoModal.selectedEntregaId);
-  }, [demoModal]);
+  const propostaModalEntregaOp = useMemo(() => {
+    if (!propostaModal || propostaModal.opcionesEntrega.length === 0) return undefined;
+    return propostaModal.opcionesEntrega.find((o) => o.id === propostaModal.selectedEntregaId);
+  }, [propostaModal]);
 
-  const demoModalLocalEntrega = useMemo(() => {
-    if (!demoModal) return '';
-    if (demoModal.opcionesEntrega.length === 0) return demoModal.tipoEntrega;
-    if (demoModal.selectedEntregaId === 'retirada') {
-      return demoModal.retiradaEndereco
-        ? `Retirada no local · ${demoModal.retiradaEndereco}`
+  const propostaModalLocalEntrega = useMemo(() => {
+    if (!propostaModal) return '';
+    if (propostaModal.opcionesEntrega.length === 0) return propostaModal.tipoEntrega;
+    if (propostaModal.selectedEntregaId === 'retirada') {
+      return propostaModal.retiradaEndereco
+        ? `Retirada no local · ${propostaModal.retiradaEndereco}`
         : 'Retirada no local (endereço enviado por mensagem após o aceite)';
     }
-    if (demoModal.entregaEnderecoCliente) {
-      return `Entrega no endereço · ${demoModal.entregaEnderecoCliente}`;
+    if (propostaModal.entregaEnderecoCliente) {
+      return `Entrega no endereço · ${propostaModal.entregaEnderecoCliente}`;
     }
     return 'Entrega no endereço cadastrado na sua conta';
-  }, [demoModal]);
+  }, [propostaModal]);
 
-  const responderDemo = useCallback(
+  const responderProposta = useCallback(
     async (aceitar: boolean) => {
-      if (!demoModal) return;
+      if (!propostaModal) return;
       const r = await responderPropostaClienteApi(
-        demoModal.propostaId,
+        propostaModal.propostaId,
         aceitar,
-        aceitar && demoModal.opcionesEntrega.length > 0
-          ? { demoEntregaOpcao: demoModal.selectedEntregaId }
+        aceitar && propostaModal.opcionesEntrega.length > 0
+          ? { entregaOpcao: propostaModal.selectedEntregaId }
           : undefined,
       );
-      setDemoModal(null);
+      setPropostaModal(null);
       if (r.ok) {
         await loadHomePedidos();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -359,7 +315,7 @@ export default function HomeUserScreen() {
         Alert.alert('Pedido', r.error);
       }
     },
-    [demoModal, loadHomePedidos],
+    [propostaModal, loadHomePedidos],
   );
 
   const removerRow = useCallback(
@@ -405,13 +361,70 @@ export default function HomeUserScreen() {
 
   return (
     <View style={styles.root}>
+      <Modal
+        visible={ratingNudge != null && propostaModal == null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (ratingNudge) ratingDismissedRef.current.add(ratingNudge.id);
+          setRatingNudge(null);
+        }}>
+        <Pressable
+          style={styles.ratingBackdrop}
+          onPress={() => {
+            if (ratingNudge) ratingDismissedRef.current.add(ratingNudge.id);
+            setRatingNudge(null);
+          }}>
+          <Pressable style={styles.ratingCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.ratingTitle}>Pedido entregue</Text>
+            <Text style={styles.ratingBody}>
+              Que tal avaliar o pedido #{ratingNudge ? String(ratingNudge.id).padStart(4, '0') : ''} com{' '}
+              {ratingNudge?.cozinheiro_nome ?? ''}?
+            </Text>
+            <View style={styles.ratingActions}>
+              <Pressable
+                onPress={() =>
+                  tap(() => {
+                    if (ratingNudge) ratingDismissedRef.current.add(ratingNudge.id);
+                    setRatingNudge(null);
+                  })
+                }
+                style={({ pressed }) => [styles.ratingBtnGhost, pressed && styles.pressed]}>
+                <Text style={styles.ratingBtnGhostText}>Fechar</Text>
+              </Pressable>
+              <Pressable
+                onPress={() =>
+                  tap(() => {
+                    if (!ratingNudge) return;
+                    const id = ratingNudge.id;
+                    ratingDismissedRef.current.add(id);
+                    setRatingNudge(null);
+                    router.push({
+                      pathname: '/(user)/receitas-enviadas',
+                      params: { avaliar: String(id) },
+                    });
+                  })
+                }
+                style={({ pressed }) => [styles.ratingBtnPrimary, pressed && styles.pressed]}>
+                <Text style={styles.ratingBtnPrimaryText}>Avaliar</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
           <Pressable style={styles.menuCard} onPress={(e) => e.stopPropagation()}>
             <Text style={styles.menuTitle}>Conta</Text>
             <Pressable
               style={({ pressed }) => [styles.menuRow, pressed && styles.pressed]}
-              onPress={() => tap(() => setMenuOpen(false))}>
+              onPress={() =>
+                tap(() => {
+                  setMenuOpen(false);
+                  router.push('/(user)/perfil');
+                })
+              }>
               <MaterialIcons name="person-outline" size={22} color={P.textM} />
               <Text style={styles.menuRowText}>Meu perfil</Text>
             </Pressable>
@@ -426,18 +439,18 @@ export default function HomeUserScreen() {
       </Modal>
 
       <Modal
-        visible={demoModal != null}
+        visible={propostaModal != null}
         transparent
         animationType="fade"
         onRequestClose={() => {
           setDeliveryPickerOpen(false);
-          setDemoModal(null);
+          setPropostaModal(null);
         }}>
         <Pressable
           style={styles.menuBackdrop}
           onPress={() => {
             setDeliveryPickerOpen(false);
-            setDemoModal(null);
+            setPropostaModal(null);
           }}>
           <Pressable style={styles.propostaCardWrap} onPress={(e) => e.stopPropagation()}>
             <ScrollView
@@ -447,40 +460,40 @@ export default function HomeUserScreen() {
               showsVerticalScrollIndicator={false}>
               <View style={styles.propostaCard}>
                 <Text style={styles.propostaTitle}>Proposta recebida</Text>
-                {demoModal ? (
+                {propostaModal ? (
                   <>
                     <View style={styles.propostaCookCard}>
                       <View style={styles.propostaCookHead}>
-                        <Text style={styles.propostaCookName}>{demoModal.cozinheiroNome}</Text>
-                        {demoModal.cozinheiroNota > 0 ? (
-                          <Text style={styles.propostaCookStars}>★ {demoModal.cozinheiroNota.toFixed(1)}</Text>
+                        <Text style={styles.propostaCookName}>{propostaModal.cozinheiroNome}</Text>
+                        {propostaModal.cozinheiroNota > 0 ? (
+                          <Text style={styles.propostaCookStars}>★ {propostaModal.cozinheiroNota.toFixed(1)}</Text>
                         ) : null}
                       </View>
-                      {demoModal.cozinheiroEspecialidade ? (
-                        <Text style={styles.propostaCookTag}>{demoModal.cozinheiroEspecialidade}</Text>
+                      {propostaModal.cozinheiroEspecialidade ? (
+                        <Text style={styles.propostaCookTag}>{propostaModal.cozinheiroEspecialidade}</Text>
                       ) : null}
-                      {demoModal.cozinheiroSobre ? (
-                        <Text style={styles.propostaCookBio}>{demoModal.cozinheiroSobre}</Text>
+                      {propostaModal.cozinheiroSobre ? (
+                        <Text style={styles.propostaCookBio}>{propostaModal.cozinheiroSobre}</Text>
                       ) : null}
-                      {demoModal.cozinheiroRespostaTempo ? (
-                        <Text style={styles.propostaCookMeta}>{demoModal.cozinheiroRespostaTempo}</Text>
+                      {propostaModal.cozinheiroRespostaTempo ? (
+                        <Text style={styles.propostaCookMeta}>{propostaModal.cozinheiroRespostaTempo}</Text>
                       ) : null}
-                      {demoModal.tempoPreparoLabel ? (
-                        <Text style={styles.propostaCookPrep}>{demoModal.tempoPreparoLabel}</Text>
+                      {propostaModal.tempoPreparoLabel ? (
+                        <Text style={styles.propostaCookPrep}>{propostaModal.tempoPreparoLabel}</Text>
                       ) : null}
                       <Text style={styles.propostaCookCta}>
-                        {demoModal.cozinheiroNome.split(' ')[0] ?? demoModal.cozinheiroNome} aceitou preparar com base na
+                        {propostaModal.cozinheiroNome.split(' ')[0] ?? propostaModal.cozinheiroNome} aceitou preparar com base na
                         sua receita e nas observações que você enviou.
                       </Text>
                     </View>
-                    {demoModal.opcionesEntrega.length > 0 ? (
+                    {propostaModal.opcionesEntrega.length > 0 ? (
                       <>
                         <Pressable
                           style={({ pressed }) => [styles.entregaPickerTrigger, pressed && styles.pressed]}
                           onPress={() => tap(() => setDeliveryPickerOpen(true))}>
                           <View style={styles.entregaPickerIconWrap}>
                             <MaterialIcons
-                              name={iconForEntregaOpcao(demoModal.selectedEntregaId)}
+                              name={iconForEntregaOpcao(propostaModal.selectedEntregaId)}
                               size={22}
                               color={P.greenD}
                             />
@@ -488,8 +501,8 @@ export default function HomeUserScreen() {
                           <View style={styles.entregaPickerTriggerText}>
                             <Text style={styles.entregaPickerTriggerKicker}>Forma de entrega</Text>
                             <Text style={styles.entregaPickerTriggerValue} numberOfLines={2}>
-                              {demoModalEntregaOp
-                                ? `${demoModalEntregaOp.label} · ${taxaResumoLinha(demoModalEntregaOp)}`
+                              {propostaModalEntregaOp
+                                ? `${propostaModalEntregaOp.label} · ${taxaResumoLinha(propostaModalEntregaOp)}`
                                 : 'Toque para escolher'}
                             </Text>
                           </View>
@@ -497,37 +510,37 @@ export default function HomeUserScreen() {
                         </Pressable>
                         <View style={styles.propostaResumo}>
                           <Text style={styles.propostaResumoLine}>
-                            Valor do plano: R$ {demoModal.baseValor.toFixed(2)}
+                            Valor do plano: R$ {propostaModal.baseValor.toFixed(2)}
                           </Text>
                           <Text style={styles.propostaResumoLine}>
-                            {demoModalEntregaOp?.estimativa && demoModalTaxa > 0
-                              ? `Estimativa de entrega (Uber): R$ ${demoModalTaxa.toFixed(2)}`
-                              : demoModalTaxa <= 0
+                            {propostaModalEntregaOp?.estimativa && propostaModalTaxa > 0
+                              ? `Estimativa de entrega (Uber): R$ ${propostaModalTaxa.toFixed(2)}`
+                              : propostaModalTaxa <= 0
                                 ? 'Taxa de entrega: sem custo'
-                                : `Taxa de entrega: R$ ${demoModalTaxa.toFixed(2)}`}
+                                : `Taxa de entrega: R$ ${propostaModalTaxa.toFixed(2)}`}
                           </Text>
                           <Text style={styles.propostaTotalPagar}>
-                            Total a pagar: R$ {demoModalTotal.toFixed(2)}
+                            Total a pagar: R$ {propostaModalTotal.toFixed(2)}
                           </Text>
                           <Text style={styles.propostaLocalTitulo}>Local do pedido</Text>
-                          <Text style={styles.propostaLocalText}>{demoModalLocalEntrega}</Text>
+                          <Text style={styles.propostaLocalText}>{propostaModalLocalEntrega}</Text>
                         </View>
                       </>
                     ) : (
                       <>
-                        <Text style={styles.propostaValor}>Valor: R$ {demoModal.baseValor.toFixed(2)}</Text>
-                        <Text style={styles.propostaEntrega}>Entrega: {demoModal.tipoEntrega}</Text>
+                        <Text style={styles.propostaValor}>Valor: R$ {propostaModal.baseValor.toFixed(2)}</Text>
+                        <Text style={styles.propostaEntrega}>Entrega: {propostaModal.tipoEntrega}</Text>
                       </>
                     )}
                     <View style={styles.propostaActions}>
                       <Pressable
                         style={({ pressed }) => [styles.propostaBtn, styles.propostaBtnOutline, pressed && styles.pressed]}
-                        onPress={() => tap(() => void responderDemo(false))}>
+                        onPress={() => tap(() => void responderProposta(false))}>
                         <Text style={styles.propostaBtnOutlineText}>Recusar</Text>
                       </Pressable>
                       <Pressable
                         style={({ pressed }) => [styles.propostaBtn, styles.propostaBtnPrimary, pressed && styles.pressed]}
-                        onPress={() => tap(() => void responderDemo(true))}>
+                        onPress={() => tap(() => void responderProposta(true))}>
                         <Text style={styles.propostaBtnPrimaryText}>Aceitar</Text>
                       </Pressable>
                     </View>
@@ -540,7 +553,7 @@ export default function HomeUserScreen() {
       </Modal>
 
       <Modal
-        visible={deliveryPickerOpen && demoModal != null}
+        visible={deliveryPickerOpen && propostaModal != null}
         transparent
         animationType="slide"
         onRequestClose={() => setDeliveryPickerOpen(false)}>
@@ -557,8 +570,8 @@ export default function HomeUserScreen() {
               style={styles.deliverySheetScroll}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
-              {demoModal?.opcionesEntrega.map((op) => {
-                const sel = demoModal.selectedEntregaId === op.id;
+              {propostaModal?.opcionesEntrega.map((op) => {
+                const sel = propostaModal.selectedEntregaId === op.id;
                 return (
                   <Pressable
                     key={op.id}
@@ -569,7 +582,7 @@ export default function HomeUserScreen() {
                     ]}
                     onPress={() =>
                       tap(() => {
-                        setDemoModal((m) => (m ? { ...m, selectedEntregaId: op.id } : m));
+                        setPropostaModal((m) => (m ? { ...m, selectedEntregaId: op.id } : m));
                         setDeliveryPickerOpen(false);
                       })
                     }>
@@ -584,7 +597,7 @@ export default function HomeUserScreen() {
                       <Text style={styles.deliveryOptionTitle}>{op.label}</Text>
                       <Text style={styles.deliveryOptionSub}>
                         {op.estimativa && op.taxa > 0
-                          ? `Estimativa Uber: + R$ ${op.taxa.toFixed(2)} (corrida simulada)`
+                          ? `Estimativa Uber: + R$ ${op.taxa.toFixed(2)} (taxa estimada)`
                           : op.taxa <= 0
                             ? 'Sem taxa de entrega'
                             : `Taxa de entrega: + R$ ${op.taxa.toFixed(2)}`}
@@ -775,7 +788,9 @@ export default function HomeUserScreen() {
             <MaterialIcons name="receipt-long" size={20} color={P.textL} />
             <Text style={styles.bnavLabel}>Pedidos</Text>
           </Pressable>
-          <Pressable onPress={() => tap(() => setMenuOpen(true))} style={styles.bnavItem}>
+          <Pressable
+            onPress={() => tap(() => router.push('/(user)/perfil'))}
+            style={styles.bnavItem}>
             <MaterialIcons name="person-outline" size={20} color={P.textL} />
             <Text style={styles.bnavLabel}>Perfil</Text>
           </Pressable>
@@ -795,6 +810,65 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: P.beige,
+  },
+  ratingBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  ratingCard: {
+    backgroundColor: P.white,
+    borderRadius: radius.lg,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: P.beigeD,
+    maxWidth: 400,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  ratingTitle: {
+    fontFamily: fontSerif,
+    fontSize: 18,
+    fontWeight: '700',
+    color: P.text,
+    marginBottom: 10,
+  },
+  ratingBody: {
+    fontSize: 14,
+    color: P.textM,
+    lineHeight: 22,
+    marginBottom: 20,
+  },
+  ratingActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  ratingBtnGhost: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: P.beigeMid,
+    backgroundColor: P.white,
+  },
+  ratingBtnGhostText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: P.brownBtn,
+  },
+  ratingBtnPrimary: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: radius.md,
+    backgroundColor: P.greenD,
+  },
+  ratingBtnPrimaryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
   menuBackdrop: {
     flex: 1,

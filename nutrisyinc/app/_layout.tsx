@@ -15,6 +15,7 @@ import 'react-native-reanimated';
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,29 +41,31 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen
-            name="index"
-            options={{
-              contentStyle: creamContent,
-              animation: 'fade',
-            }}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{ animation: 'fade', contentStyle: creamContent }}
-          />
-          <Stack.Screen
-            name="(user)"
-            options={{ animation: 'fade', contentStyle: creamContent }}
-          />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(cook)" />
-        </Stack>
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen
+              name="index"
+              options={{
+                contentStyle: creamContent,
+                animation: 'fade',
+              }}
+            />
+            <Stack.Screen
+              name="(tabs)"
+              options={{ animation: 'fade', contentStyle: creamContent }}
+            />
+            <Stack.Screen
+              name="(user)"
+              options={{ animation: 'fade', contentStyle: creamContent }}
+            />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(cook)" />
+          </Stack>
+          <StatusBar style="auto" />
+        </ThemeProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

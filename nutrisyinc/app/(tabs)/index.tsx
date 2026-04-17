@@ -139,6 +139,11 @@ export default function HomeScreen() {
               style={({ pressed }) => [styles.debugBtn, pressed && styles.pressed]}>
               <Text style={styles.debugBtnText}>Debug — Home cliente (home-user)</Text>
             </Pressable>
+            <Pressable
+              onPress={() => tap(() => router.push('/(cook)/dashboard'))}
+              style={({ pressed }) => [styles.debugBtn, pressed && styles.pressed]}>
+              <Text style={styles.debugBtnText}>Debug — Painel cozinheiro</Text>
+            </Pressable>
           </View>
         ) : null}
       </ScrollView>
@@ -414,6 +419,7 @@ const styles = StyleSheet.create({
     maxWidth: 860,
     width: '100%',
     alignSelf: 'center',
+    gap: 8,
   },
   debugBtn: {
     paddingVertical: 10,

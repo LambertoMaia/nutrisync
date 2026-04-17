@@ -83,6 +83,7 @@ export default function RegisterScreen() {
     Object.fromEntries(ESPECIALIDADES.map((s) => [s, false])),
   );
   const [sobreVoce, setSobreVoce] = useState('');
+  const [tipoEntrega, setTipoEntrega] = useState<'delivery' | 'retirada' | 'ambos'>('ambos');
 
   const [submitting, setSubmitting] = useState(false);
   const [emailTakenOpen, setEmailTakenOpen] = useState(false);
@@ -127,7 +128,7 @@ export default function RegisterScreen() {
         if (tipo === 'cliente') {
           router.replace('/home');
         } else {
-          router.replace('/(tabs)');
+          router.replace('/(cook)/dashboard');
         }
         return;
       }
@@ -286,6 +287,7 @@ export default function RegisterScreen() {
         complemento: addressSaved.complemento,
         especialidades: selectedSpecs,
         sobre_voce: sobreVoce.trim(),
+        tipo_entrega: tipoEntrega,
       });
       await handleRegisterResult(result, 'Seu cadastro de cozinheiro foi registrado.');
     } finally {
@@ -301,6 +303,7 @@ export default function RegisterScreen() {
     confirmarSenha,
     savedCepDigits,
     sobreVoce,
+    tipoEntrega,
     handleRegisterResult,
   ]);
 
@@ -459,6 +462,31 @@ export default function RegisterScreen() {
                       onPress={() => toggleSpec(label)}
                       style={[styles.specChip, spec[label] && styles.specChipOn]}>
                       <Text style={[styles.specChipText, spec[label] && styles.specChipTextOn]}>{label}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                <Text style={styles.specLabel}>Tipo de entrega</Text>
+                <Text style={styles.specHint}>Como os clientes podem receber as marmitas</Text>
+                <View style={styles.tipoEntregaRow}>
+                  {(
+                    [
+                      { value: 'delivery' as const, label: 'Entrega' },
+                      { value: 'retirada' as const, label: 'Retirada' },
+                      { value: 'ambos' as const, label: 'Ambos' },
+                    ]
+                  ).map(({ value, label }) => (
+                    <Pressable
+                      key={value}
+                      onPress={() => tap(() => setTipoEntrega(value))}
+                      style={[styles.tipoEntregaChip, tipoEntrega === value && styles.tipoEntregaChipOn]}>
+                      <Text
+                        style={[
+                          styles.tipoEntregaChipText,
+                          tipoEntrega === value && styles.tipoEntregaChipTextOn,
+                        ]}>
+                        {label}
+                      </Text>
                     </Pressable>
                   ))}
                 </View>
@@ -776,6 +804,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   specChipTextOn: {
+    fontWeight: '600',
+    color: P.greenD,
+  },
+  tipoEntregaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tipoEntregaChip: {
+    flex: 1,
+    minWidth: '28%',
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: P.beigeMid,
+    backgroundColor: P.white,
+    alignItems: 'center',
+  },
+  tipoEntregaChipOn: {
+    borderColor: P.green,
+    backgroundColor: P.greenL,
+  },
+  tipoEntregaChipText: {
+    fontSize: 12,
+    color: P.textM,
+    textAlign: 'center',
+  },
+  tipoEntregaChipTextOn: {
     fontWeight: '600',
     color: P.greenD,
   },

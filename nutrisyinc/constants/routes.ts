@@ -19,4 +19,8 @@ export const Routes = {
   confirmOrder: '/confirm-order',
   orderStatus: '/order-status',
   cookDashboard: '/dashboard',
+  /** Perfil cliente (protótipo `perfil.html`) */
+  userPerfil: '/(user)/perfil',
+  /** Histórico de pedidos entregues + avaliação */
+  receitasEnviadas: '/(user)/receitas-enviadas',
 } as const;

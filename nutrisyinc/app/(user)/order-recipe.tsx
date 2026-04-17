@@ -80,7 +80,7 @@ export default function OrderRecipeScreen() {
         Alert.alert('Tipo não permitido', 'Use apenas JPG, PNG ou PDF.');
         return;
       }
-      // Demo: no upload to a server
+      // Sem upload ao servidor neste fluxo
       setRecipeFile({
         name: asset.name,
         size: asset.size ?? 0,
@@ -171,7 +171,7 @@ export default function OrderRecipeScreen() {
                       <Ionicons color={NutrilhoColors.textM} name="close-circle" size={28} />
                     </Pressable>
                   </View>
-                  <Text style={styles.uploadOkDemo}>Recebido (demo — sem envio ao servidor)</Text>
+                  <Text style={styles.uploadOkLocal}>Recebido (sem envio ao servidor)</Text>
                 </View>
               )}
               <Text style={styles.uploadFoot}>O arquivo vai diretamente para o cozinheiro escolhido</Text>
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: NutrilhoColors.textM,
   },
-  uploadOkDemo: {
+  uploadOkLocal: {
     fontFamily: FontFamily.sansRegular,
     fontSize: 11,
     color: NutrilhoColors.textL,

@@ -61,7 +61,7 @@ export default function LoginScreen() {
         if (tipo === 'cliente') {
           router.replace('/home');
         } else {
-          router.replace('/(tabs)');
+          router.replace('/(cook)/dashboard');
         }
         return;
       }

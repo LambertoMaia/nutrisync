@@ -71,6 +71,8 @@ export default function SplashRoute() {
       const u = userRef.current;
       if (u?.tipo === 'cliente') {
         router.replace('/home');
+      } else if (u?.tipo === 'cozinheiro') {
+        router.replace('/(cook)/dashboard');
       } else {
         router.replace('/(tabs)');
       }

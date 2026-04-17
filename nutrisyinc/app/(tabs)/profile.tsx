@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { ScreenScaffold } from '@/components/layout';
@@ -9,7 +10,26 @@ import { FontFamily, NutrilhoColors } from '@/constants/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
+
+  useEffect(() => {
+    if (loading) return;
+    if (user?.tipo === 'cliente') {
+      router.replace('/(user)/perfil');
+    }
+  }, [loading, user?.tipo, router]);
+
+  if (loading) {
+    return <View style={styles.redirectShell} />;
+  }
+
+  if (user?.tipo === 'cliente') {
+    return (
+      <View style={styles.redirectShell}>
+        <Text style={styles.body}>A abrir perfil…</Text>
+      </View>
+    );
+  }
 
   if (!user) {
     return (
@@ -30,7 +50,7 @@ export default function ProfileScreen() {
         <Text style={styles.label}>E-mail</Text>
         <Text style={styles.value}>{user.email}</Text>
         <Text style={styles.label}>Perfil</Text>
-        <Text style={styles.value}>{user.tipo === 'cliente' ? 'Cliente' : 'Cozinheiro'}</Text>
+        <Text style={styles.value}>Cozinheiro</Text>
         <Button
           title="Sair"
           variant="secondary"
@@ -45,6 +65,12 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  redirectShell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: NutrilhoColors.cream,
+  },
   stack: {
     gap: 10,
   },

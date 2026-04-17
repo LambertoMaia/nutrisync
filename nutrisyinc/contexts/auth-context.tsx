@@ -21,7 +21,7 @@ function makeMockUser(
     role,
     email: overrides?.email ?? (role === 'client' ? 'cliente@nutrilho.app' : 'cozinheiro@nutrilho.app'),
     displayName:
-      overrides?.displayName ?? (role === 'client' ? 'Cliente (demo)' : 'Cozinheiro (demo)'),
+      overrides?.displayName ?? (role === 'client' ? 'Cliente' : 'Cozinheiro'),
   };
 }
 
