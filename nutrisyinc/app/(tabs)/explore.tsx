@@ -10,6 +10,7 @@ export default function ExploreScreen() {
   const router = useRouter();
 
   return (
+<<<<<<< Updated upstream
     <ScreenScaffold
       title="Explorar"
       subtitle="Atalho para o marketplace de cozinheiros. Na Fase 4, este fluxo será integrado ao marketplace.">
@@ -20,6 +21,12 @@ export default function ExploreScreen() {
         <Button title="Ver cozinheiros" variant="primary" onPress={() => router.push(Routes.marketplace)} />
       </View>
     </ScreenScaffold>
+=======
+    <View style={styles.container}>
+      <Text style={styles.title}>Marketplace</Text>
+      <Text style={styles.sub}>Em breve — lista de cozinheiros e marmitas.</Text>
+    </View>
+>>>>>>> Stashed changes
   );
 }
 

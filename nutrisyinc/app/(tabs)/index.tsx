@@ -4,11 +4,36 @@ import { useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+<<<<<<< Updated upstream
 import { TopNav } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Routes } from '@/constants/routes';
 import { FontFamily, NutrilhoColors, Spacing } from '@/constants/theme';
+=======
+import { LogoMark } from '@/components/prototype/LogoMark';
+
+const serif = Platform.select({
+  ios: 'Georgia',
+  android: 'serif',
+  default: 'serif',
+});
+
+/** Palette from web-prototype/styles.css */
+const C = {
+  green: '#4a7c2f',
+  greenD: '#2e5a18',
+  greenL: '#eaf2e0',
+  brownBtn: '#5c3d20',
+  beige: '#f5f0e8',
+  beigeD: '#ede5d4',
+  cream: '#faf7f2',
+  white: '#ffffff',
+  text: '#1e1a12',
+  textM: '#5a4e3a',
+  textL: '#8a7a65',
+};
+>>>>>>> Stashed changes
 
 const steps = [
   { num: '1', title: 'Crie sua conta', body: 'Cadastre perfil com objetivo e restrições alimentares.' },
@@ -31,6 +56,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.safeTop}>
+<<<<<<< Updated upstream
         <TopNav
           right={
             <>
@@ -43,6 +69,23 @@ export default function HomeScreen() {
             </>
           }
         />
+=======
+        <View style={styles.topnav}>
+          <LogoMark />
+          <View style={styles.navRight}>
+            <Pressable
+              onPress={() => tap(() => router.push('/login'))}
+              style={({ pressed }) => [styles.btnNav, styles.btnGhost, pressed && styles.pressed]}>
+              <Text style={styles.btnGhostText}>Entrar</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => tap(() => router.push('/register'))}
+              style={({ pressed }) => [styles.btnNav, styles.btnGreen, pressed && styles.pressed]}>
+              <Text style={styles.btnGreenText}>Cadastrar</Text>
+            </Pressable>
+          </View>
+        </View>
+>>>>>>> Stashed changes
       </SafeAreaView>
 
       <ScrollView
@@ -57,6 +100,7 @@ export default function HomeScreen() {
             <Text style={styles.heroTitleEm}>A gente entrega</Text>
             <Text style={styles.heroTitle}> a marmita.</Text>
           </Text>
+<<<<<<< Updated upstream
           <View style={styles.heroPWrap}>
             <Text style={styles.heroP}>
               Envie o plano do seu nutricionista e cozinheiros parceiros montam suas marmitas exatamente como
@@ -71,6 +115,18 @@ export default function HomeScreen() {
               style={styles.heroCtaBtn}
               textStyle={styles.heroCtaBtnText}
             />
+=======
+          <Text style={styles.heroP}>
+            Envie o plano do seu nutricionista e cozinheiros parceiros montam suas marmitas exatamente como
+            prescrito. Sem improvisar. Sem furar a dieta.
+          </Text>
+          <View style={styles.heroBtns}>
+            <Pressable
+              onPress={() => tap(() => router.push('/register'))}
+              style={({ pressed }) => [styles.btnPrimary, pressed && styles.pressed]}>
+              <Text style={styles.btnPrimaryText}>Quero pedir minhas marmitas</Text>
+            </Pressable>
+>>>>>>> Stashed changes
           </View>
         </View>
 
@@ -89,6 +145,36 @@ export default function HomeScreen() {
             ))}
           </View>
         </View>
+<<<<<<< Updated upstream
+=======
+
+        <View style={styles.ctaBand}>
+          <View style={styles.ctaInner}>
+            <View style={styles.ctaCopy}>
+              <Text style={styles.ctaKicker}>Não tem receita?</Text>
+              <Text style={styles.ctaHead}>Use nosso cardápio sugerido</Text>
+              <Text style={styles.ctaDesc}>
+                Planos de emagrecimento, hipertrofia ou manutenção — preparados por cozinheiros reais.
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => tap(() => router.push('/explore'))}
+              style={({ pressed }) => [styles.btnPrimary, styles.ctaBtn, pressed && styles.pressed]}>
+              <Text style={styles.btnPrimaryText}>Ver cardápios →</Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {__DEV__ ? (
+          <View style={styles.debugWrap}>
+            <Pressable
+              onPress={() => tap(() => router.push('/home'))}
+              style={({ pressed }) => [styles.debugBtn, pressed && styles.pressed]}>
+              <Text style={styles.debugBtnText}>Debug — Home cliente (home-user)</Text>
+            </Pressable>
+          </View>
+        ) : null}
+>>>>>>> Stashed changes
       </ScrollView>
     </View>
   );
@@ -100,7 +186,51 @@ const styles = StyleSheet.create({
     backgroundColor: NutrilhoColors.cream,
   },
   safeTop: {
+<<<<<<< Updated upstream
     backgroundColor: NutrilhoColors.white,
+=======
+    backgroundColor: C.white,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: C.beigeD,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  topnav: {
+    height: 62,
+    paddingHorizontal: 19,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  navRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  btnNav: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+  },
+  btnGhost: {
+    backgroundColor: 'transparent',
+  },
+  btnGhostText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: C.textM,
+  },
+  btnGreen: {
+    backgroundColor: C.green,
+  },
+  btnGreenText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#fff',
+>>>>>>> Stashed changes
   },
   scroll: {
     flex: 1,
@@ -242,4 +372,73 @@ const styles = StyleSheet.create({
     color: NutrilhoColors.textM,
     lineHeight: 19,
   },
+<<<<<<< Updated upstream
+=======
+  ctaBand: {
+    backgroundColor: C.greenL,
+    paddingVertical: 29,
+    paddingHorizontal: 21,
+  },
+  ctaInner: {
+    maxWidth: 860,
+    alignSelf: 'center',
+    width: '100%',
+    gap: 14,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  ctaCopy: {
+    flex: 1,
+    minWidth: 220,
+  },
+  ctaKicker: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: C.green,
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+    marginBottom: 6,
+  },
+  ctaHead: {
+    fontFamily: serif,
+    fontSize: 19,
+    fontWeight: '700',
+    color: C.text,
+    marginBottom: 6,
+  },
+  ctaDesc: {
+    fontSize: 13,
+    color: C.textM,
+    lineHeight: 21,
+  },
+  ctaBtn: {
+    alignSelf: 'flex-start',
+  },
+  debugWrap: {
+    paddingHorizontal: 21,
+    paddingTop: 8,
+    paddingBottom: 28,
+    maxWidth: 860,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  debugBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(92,61,32,0.35)',
+    backgroundColor: 'rgba(92,61,32,0.08)',
+    alignItems: 'center',
+  },
+  debugBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: C.brownBtn,
+  },
+  bottomSpacer: {
+    height: 24,
+  },
+>>>>>>> Stashed changes
 });
