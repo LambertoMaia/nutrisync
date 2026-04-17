@@ -9,13 +9,9 @@ export default function TabLayout() {
         tabBarStyle: { display: 'none' },
       }}>
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
-<<<<<<< Updated upstream
-      <Tabs.Screen name="explore" options={{ title: 'Explorar' }} />
+      <Tabs.Screen name="explore" options={{ title: 'Marketplace' }} />
       <Tabs.Screen name="orders" options={{ title: 'Pedidos' }} />
       <Tabs.Screen name="profile" options={{ title: 'Perfil' }} />
-=======
-      <Tabs.Screen name="explore" options={{ title: 'Marketplace' }} />
->>>>>>> Stashed changes
     </Tabs>
   );
 }

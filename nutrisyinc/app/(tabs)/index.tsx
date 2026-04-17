@@ -1,17 +1,19 @@
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-<<<<<<< Updated upstream
-import { TopNav } from '@/components/layout';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Routes } from '@/constants/routes';
-import { FontFamily, NutrilhoColors, Spacing } from '@/constants/theme';
-=======
 import { LogoMark } from '@/components/prototype/LogoMark';
+import { FontFamily, NutrilhoColors, Shadows, Spacing } from '@/constants/theme';
 
 const serif = Platform.select({
   ios: 'Georgia',
@@ -33,7 +35,6 @@ const C = {
   textM: '#5a4e3a',
   textL: '#8a7a65',
 };
->>>>>>> Stashed changes
 
 const steps = [
   { num: '1', title: 'Crie sua conta', body: 'Cadastre perfil com objetivo e restrições alimentares.' },
@@ -56,20 +57,6 @@ export default function HomeScreen() {
   return (
     <View style={styles.root}>
       <SafeAreaView edges={['top']} style={styles.safeTop}>
-<<<<<<< Updated upstream
-        <TopNav
-          right={
-            <>
-              <Button title="Entrar" variant="ghost" onPress={() => tap(() => router.push(Routes.login))} />
-              <Button
-                title="Cadastrar"
-                variant="green"
-                onPress={() => tap(() => router.push(Routes.register))}
-              />
-            </>
-          }
-        />
-=======
         <View style={styles.topnav}>
           <LogoMark />
           <View style={styles.navRight}>
@@ -85,7 +72,6 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         </View>
->>>>>>> Stashed changes
       </SafeAreaView>
 
       <ScrollView
@@ -100,22 +86,6 @@ export default function HomeScreen() {
             <Text style={styles.heroTitleEm}>A gente entrega</Text>
             <Text style={styles.heroTitle}> a marmita.</Text>
           </Text>
-<<<<<<< Updated upstream
-          <View style={styles.heroPWrap}>
-            <Text style={styles.heroP}>
-              Envie o plano do seu nutricionista e cozinheiros parceiros montam suas marmitas exatamente como
-              prescrito. Sem improvisar. Sem furar a dieta.
-            </Text>
-          </View>
-          <View style={styles.heroCtaWrap}>
-            <Button
-              title="Quero pedir minhas marmitas"
-              variant="primary"
-              onPress={() => tap(() => router.push(Routes.register))}
-              style={styles.heroCtaBtn}
-              textStyle={styles.heroCtaBtnText}
-            />
-=======
           <Text style={styles.heroP}>
             Envie o plano do seu nutricionista e cozinheiros parceiros montam suas marmitas exatamente como
             prescrito. Sem improvisar. Sem furar a dieta.
@@ -126,7 +96,6 @@ export default function HomeScreen() {
               style={({ pressed }) => [styles.btnPrimary, pressed && styles.pressed]}>
               <Text style={styles.btnPrimaryText}>Quero pedir minhas marmitas</Text>
             </Pressable>
->>>>>>> Stashed changes
           </View>
         </View>
 
@@ -135,18 +104,16 @@ export default function HomeScreen() {
           <Text style={styles.secSub}>Do consultório à sua mesa em 4 passos</Text>
           <View style={styles.stepsGrid}>
             {steps.map((s) => (
-              <Card key={s.num} style={[styles.stepCard, stepCardWidthStyle]}>
+              <View key={s.num} style={[styles.stepCard, styles.stepCardSurface, stepCardWidthStyle]}>
                 <View style={styles.stepNum}>
                   <Text style={styles.stepNumText}>{s.num}</Text>
                 </View>
                 <Text style={styles.stepTitle}>{s.title}</Text>
                 <Text style={styles.stepBody}>{s.body}</Text>
-              </Card>
+              </View>
             ))}
           </View>
         </View>
-<<<<<<< Updated upstream
-=======
 
         <View style={styles.ctaBand}>
           <View style={styles.ctaInner}>
@@ -174,7 +141,6 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         ) : null}
->>>>>>> Stashed changes
       </ScrollView>
     </View>
   );
@@ -186,9 +152,6 @@ const styles = StyleSheet.create({
     backgroundColor: NutrilhoColors.cream,
   },
   safeTop: {
-<<<<<<< Updated upstream
-    backgroundColor: NutrilhoColors.white,
-=======
     backgroundColor: C.white,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: C.beigeD,
@@ -230,7 +193,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '500',
     color: '#fff',
->>>>>>> Stashed changes
+  },
+  pressed: {
+    opacity: 0.9,
+  },
+  heroBtns: {
+    alignSelf: 'stretch',
+    maxWidth: 400,
+    width: '100%',
+    marginTop: 12,
+  },
+  btnPrimary: {
+    width: '100%',
+    paddingVertical: 17,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    backgroundColor: C.green,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.primaryButton,
+  },
+  btnPrimaryText: {
+    fontFamily: FontFamily.sansSemiBold,
+    fontSize: 16,
+    letterSpacing: 0.2,
+    color: '#fff',
   },
   scroll: {
     flex: 1,
@@ -339,6 +326,13 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     paddingHorizontal: 18,
   },
+  stepCardSurface: {
+    backgroundColor: NutrilhoColors.white,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(74,124,47,0.12)',
+    ...Shadows.card,
+  },
   stepCardFull: {
     width: '100%',
   },
@@ -372,8 +366,6 @@ const styles = StyleSheet.create({
     color: NutrilhoColors.textM,
     lineHeight: 19,
   },
-<<<<<<< Updated upstream
-=======
   ctaBand: {
     backgroundColor: C.greenL,
     paddingVertical: 29,
@@ -440,5 +432,4 @@ const styles = StyleSheet.create({
   bottomSpacer: {
     height: 24,
   },
->>>>>>> Stashed changes
 });

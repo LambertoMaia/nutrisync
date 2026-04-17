@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { ScreenScaffold } from '@/components/layout';
 import { CookCard } from '@/components/ui/cook-card';
-import { fetchCooks } from '@/lib/api';
+import { mockCooks } from '@/data/mocks/cooks';
 import type { Cook } from '@/types/models';
 
 export default function MarketplaceScreen() {
@@ -13,8 +13,8 @@ export default function MarketplaceScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchCooks();
-      setCooks(data);
+      await new Promise((r) => setTimeout(r, 80));
+      setCooks([...mockCooks]);
     } finally {
       setLoading(false);
     }

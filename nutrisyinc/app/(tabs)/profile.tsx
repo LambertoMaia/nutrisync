@@ -4,12 +4,12 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ScreenScaffold } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Routes } from '@/constants/routes';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/contexts/AuthContext';
 import { FontFamily, NutrilhoColors } from '@/constants/theme';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
 
   if (!user) {
     return (
@@ -26,16 +26,16 @@ export default function ProfileScreen() {
     <ScreenScaffold title="Perfil" subtitle="Dados da conta e preferências.">
       <View style={styles.stack}>
         <Text style={styles.label}>Nome</Text>
-        <Text style={styles.value}>{user.displayName}</Text>
+        <Text style={styles.value}>{user.nome}</Text>
         <Text style={styles.label}>E-mail</Text>
         <Text style={styles.value}>{user.email}</Text>
         <Text style={styles.label}>Perfil</Text>
-        <Text style={styles.value}>{user.role === 'client' ? 'Cliente' : 'Cozinheiro'}</Text>
+        <Text style={styles.value}>{user.tipo === 'cliente' ? 'Cliente' : 'Cozinheiro'}</Text>
         <Button
           title="Sair"
           variant="secondary"
-          onPress={() => {
-            signOut();
+          onPress={async () => {
+            await logout();
             router.replace(Routes.tabs);
           }}
         />

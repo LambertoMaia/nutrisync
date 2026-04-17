@@ -3,7 +3,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { ScreenScaffold } from '@/components/layout';
 import { PedidoCard } from '@/components/ui/pedido-card';
-import { fetchPedidos } from '@/lib/api';
+import { mockPedidos } from '@/data/mocks/pedidos';
 import type { Pedido } from '@/types/models';
 
 export default function OrdersScreen() {
@@ -13,8 +13,8 @@ export default function OrdersScreen() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchPedidos();
-      setPedidos(data);
+      await new Promise((r) => setTimeout(r, 80));
+      setPedidos([...mockPedidos]);
     } finally {
       setLoading(false);
     }

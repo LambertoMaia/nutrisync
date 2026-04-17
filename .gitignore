@@ -1,0 +1,3 @@
+# Flask API — separate Git repository (https://github.com/selenamenezes/nutrilho).
+# Clone it here as ./nutrilho/ for local dev; do not track it in this repo.
+nutrilho/

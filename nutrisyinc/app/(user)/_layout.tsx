@@ -1,9 +1,5 @@
 import { Stack } from 'expo-router';
 
-<<<<<<< Updated upstream
-export default function UserFlowLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
-=======
 export default function UserGroupLayout() {
   return (
     <Stack
@@ -14,5 +10,4 @@ export default function UserGroupLayout() {
       }}
     />
   );
->>>>>>> Stashed changes
 }
