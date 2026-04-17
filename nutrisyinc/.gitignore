@@ -36,6 +36,7 @@ yarn-error.*
 
 # Cursor (local IDE / workspace)
 .cursor/
+.vscode/
 
 # typescript
 *.tsbuildinfo
@@ -45,3 +46,9 @@ app-example
 # generated native folders
 /ios
 /android
+
+# IA 
+GUIDELINES.md
+IMPLEMENTATION_PLAN.md
+GEMINI.md
+.specstory/
