@@ -19,3 +19,19 @@ export function maskCep(digits: string): string {
   if (d.length <= 5) return d;
   return `${d.slice(0, 5)}-${d.slice(5)}`;
 }
+
+/** BRL: centavos → "R$ 1.234,56" (máx 9 dígitos → R$ 9.999.999,99). */
+export function maskBrlFromDigits(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, 9).padStart(3, '0');
+  const reais = d.slice(0, -2).replace(/^0+(?=\d)/, '');
+  const cents = d.slice(-2);
+  const milhares = (reais || '0').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `R$ ${milhares},${cents}`;
+}
+
+/** Converte a máscara BRL de volta para Number (em reais, com 2 casas). */
+export function brlToNumber(masked: string): number {
+  const digits = masked.replace(/\D/g, '');
+  if (!digits) return 0;
+  return Number(digits) / 100;
+}

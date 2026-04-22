@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -18,7 +19,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchPedidosClienteTodosApi, type PedidoClienteHistoricoJson } from '@/lib/api';
+import {
+  fetchPedidosClienteTodosApi,
+  putPedidoStatusApi,
+  type PedidoClienteHistoricoJson,
+} from '@/lib/api';
+import { iconForEntregaOpcao, pedidoEntregaResumo } from '@/lib/entrega';
 import { fontSerif, P, radius } from '@/constants/prototypeTheme';
 
 function formatValorBrl(v: number) {
@@ -45,10 +51,12 @@ function labelQuando(dataDdMmYyyy: string): string {
   return dataDdMmYyyy;
 }
 
-function badgeForStatus(status: string): { label: string; variant: 'prep' | 'done' | 'muted' } {
+function badgeForStatus(
+  status: string,
+): { label: string; variant: 'prep' | 'done' | 'muted' | 'delivery' } {
   if (status === 'entregue') return { label: 'Entregue', variant: 'done' };
   if (status === 'cancelado') return { label: 'Cancelado', variant: 'muted' };
-  if (status === 'saiu_entrega') return { label: 'A caminho', variant: 'prep' };
+  if (status === 'saiu_entrega') return { label: 'Saiu para entrega', variant: 'delivery' };
   return { label: 'Em preparo', variant: 'prep' };
 }
 
@@ -58,34 +66,72 @@ export default function MeusPedidosScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [pedidos, setPedidos] = useState<PedidoClienteHistoricoJson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmingEntregaId, setConfirmingEntregaId] = useState<number | null>(null);
 
   const tap = useCallback((fn: () => void) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     fn();
   }, []);
 
-  const loadPedidos = useCallback(async () => {
-    if (!user || user.tipo !== 'cliente') return;
-    setLoading(true);
-    try {
-      const res = await fetchPedidosClienteTodosApi(user.id);
-      if (res.ok) {
-        setPedidos(res.pedidos);
-      } else {
-        setPedidos([]);
+  const loadPedidos = useCallback(
+    async (opts: { silent?: boolean } = {}) => {
+      if (!user || user.tipo !== 'cliente') return;
+      if (!opts.silent) setLoading(true);
+      try {
+        const res = await fetchPedidosClienteTodosApi(user.id);
+        if (res.ok) {
+          setPedidos(res.pedidos);
+        } else if (!opts.silent) {
+          setPedidos([]);
+        }
+      } catch {
+        if (!opts.silent) setPedidos([]);
+      } finally {
+        if (!opts.silent) setLoading(false);
       }
-    } catch {
-      setPedidos([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
+    },
+    [user],
+  );
 
   useFocusEffect(
     useCallback(() => {
       if (!user || user.tipo !== 'cliente') return;
+      let active = true;
       void loadPedidos();
+      const POLL_MS = 15000;
+      const timer = setInterval(() => {
+        if (!active) return;
+        void loadPedidos({ silent: true });
+      }, POLL_MS);
+      return () => {
+        active = false;
+        clearInterval(timer);
+      };
     }, [user, loadPedidos]),
+  );
+
+  const confirmarEntrega = useCallback(
+    (pedidoId: number) => {
+      Alert.alert('Confirmar entrega', 'Você recebeu o pedido?', [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          onPress: () =>
+            void (async () => {
+              setConfirmingEntregaId(pedidoId);
+              const r = await putPedidoStatusApi(pedidoId, 'entregue');
+              setConfirmingEntregaId(null);
+              if (!r.ok) {
+                Alert.alert('Não deu pra confirmar', r.error);
+                return;
+              }
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              await loadPedidos();
+            })(),
+        },
+      ]);
+    },
+    [loadPedidos],
   );
 
   const onLogout = useCallback(async () => {
@@ -165,6 +211,13 @@ export default function MeusPedidosScreen() {
                   key={p.id}
                   onPress={() =>
                     tap(() => {
+                      if (p.status_pagamento === 'pendente') {
+                        router.push({
+                          pathname: '/(user)/checkout/[id]',
+                          params: { id: String(p.id) },
+                        });
+                        return;
+                      }
                       if (p.status === 'entregue') {
                         router.push({
                           pathname: '/(user)/receitas-enviadas',
@@ -187,6 +240,7 @@ export default function MeusPedidosScreen() {
                         badge.variant === 'prep' && styles.pbadgePrep,
                         badge.variant === 'done' && styles.pbadgeDone,
                         badge.variant === 'muted' && styles.pbadgeMuted,
+                        badge.variant === 'delivery' && styles.pbadgeDelivery,
                       ]}>
                       <Text
                         style={[
@@ -194,6 +248,7 @@ export default function MeusPedidosScreen() {
                           badge.variant === 'prep' && styles.pbadgeTextPrep,
                           badge.variant === 'done' && styles.pbadgeTextDone,
                           badge.variant === 'muted' && styles.pbadgeTextMuted,
+                          badge.variant === 'delivery' && styles.pbadgeTextDelivery,
                         ]}>
                         {badge.label}
                       </Text>
@@ -210,6 +265,41 @@ export default function MeusPedidosScreen() {
                       <Text style={styles.avaliado}> · ★ {p.avaliacao} avaliado</Text>
                     ) : null}
                   </Text>
+                  {(() => {
+                    const entregaLinha = pedidoEntregaResumo(p);
+                    return entregaLinha ? (
+                      <View style={styles.entregaRow}>
+                        <MaterialIcons
+                          name={iconForEntregaOpcao(p.entrega_opcao)}
+                          size={14}
+                          color={P.textM}
+                        />
+                        <Text style={styles.entregaText}>{entregaLinha}</Text>
+                      </View>
+                    ) : null;
+                  })()}
+                  {p.status_pagamento === 'pendente' ? (
+                    <View style={styles.payCta}>
+                      <MaterialIcons name="payments" size={14} color="#7a4f00" />
+                      <Text style={styles.payCtaText}>Pagamento pendente — toque para finalizar</Text>
+                    </View>
+                  ) : null}
+                  {p.status === 'saiu_entrega' && (
+                    <Pressable
+                      disabled={confirmingEntregaId === p.id}
+                      onPress={() => tap(() => confirmarEntrega(p.id))}
+                      style={({ pressed }) => [
+                        styles.confirmarEntregaBtn,
+                        pressed && styles.pressed,
+                        confirmingEntregaId === p.id && styles.confirmarEntregaDisabled,
+                      ]}>
+                      {confirmingEntregaId === p.id ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.confirmarEntregaBtnText}>Confirmar entrega</Text>
+                      )}
+                    </Pressable>
+                  )}
                 </Pressable>
               );
             })
@@ -223,7 +313,9 @@ export default function MeusPedidosScreen() {
             <MaterialIcons name="home" size={20} color={P.textL} />
             <Text style={styles.bnavLabel}>Início</Text>
           </Pressable>
-          <Pressable onPress={() => tap(() => {})} style={styles.bnavItem}>
+          <Pressable
+            onPress={() => tap(() => router.push('/(user)/marketplace'))}
+            style={styles.bnavItem}>
             <MaterialIcons name="search" size={20} color={P.textL} />
             <Text style={styles.bnavLabel}>Buscar</Text>
           </Pressable>
@@ -348,6 +440,9 @@ const styles = StyleSheet.create({
   pbadgeMuted: {
     backgroundColor: P.beige,
   },
+  pbadgeDelivery: {
+    backgroundColor: '#e3f2fd',
+  },
   pbadgeText: {
     fontSize: 10,
     fontWeight: '600',
@@ -361,10 +456,49 @@ const styles = StyleSheet.create({
   pbadgeTextMuted: {
     color: P.textM,
   },
+  pbadgeTextDelivery: {
+    color: '#1565c0',
+  },
+  confirmarEntregaBtn: {
+    marginTop: 10,
+    backgroundColor: P.green,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+  },
+  confirmarEntregaBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  confirmarEntregaDisabled: { opacity: 0.6 },
   pedidoInfo: {
     fontSize: 12,
     color: P.textM,
     lineHeight: 18,
+  },
+  entregaRow: {
+    marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  entregaText: {
+    fontSize: 12,
+    color: P.textM,
+    flex: 1,
+  },
+  payCta: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff3cc',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  payCtaText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#7a4f00',
+    fontWeight: '600',
   },
   avaliarLink: {
     color: P.green,

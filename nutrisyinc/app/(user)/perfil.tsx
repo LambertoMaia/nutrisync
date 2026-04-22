@@ -211,7 +211,9 @@ export default function PerfilScreen() {
             <MaterialIcons name="home" size={20} color={P.textL} />
             <Text style={styles.bnavLabel}>Início</Text>
           </Pressable>
-          <Pressable onPress={() => tap(() => {})} style={styles.bnavItem}>
+          <Pressable
+            onPress={() => tap(() => router.push('/(user)/marketplace'))}
+            style={styles.bnavItem}>
             <MaterialIcons name="search" size={20} color={P.textL} />
             <Text style={styles.bnavLabel}>Buscar</Text>
           </Pressable>

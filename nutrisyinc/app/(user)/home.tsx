@@ -3,9 +3,9 @@
  */
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import type { ComponentProps } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,13 +26,18 @@ import {
   deletePedidoClienteApi,
   deleteSolicitacaoApi,
   fetchClienteHomePedidosApi,
-  fetchPedidosClienteTodosApi,
+  fetchCozinheiroDetalhesApi,
   fetchPerfilClienteApi,
+  putPedidoStatusApi,
   responderPropostaClienteApi,
+  resolvePublicMediaUrl,
+  type CozinheiroDetalhesJson,
+  type CozinheiroListJson,
+  type EntregaOpcaoId,
   type PedidoClienteAtivoJson,
-  type PedidoClienteHistoricoJson,
   type SolicitacaoClienteJson,
 } from '@/lib/api';
+import { formatDistanciaKm, iconForEntregaOpcao, pedidoEntregaResumo } from '@/lib/entrega';
 import { firstName, initialFromName } from '@/lib/name';
 import { fontSerif, P, radius } from '@/constants/prototypeTheme';
 
@@ -61,14 +66,23 @@ type MergedRow =
   | { kind: 'solicitacao'; item: SolicitacaoClienteJson }
   | { kind: 'pedido'; item: PedidoClienteAtivoJson };
 
-type EntregaOpcao = { id: string; label: string; taxa: number; estimativa?: boolean };
+type EntregaOpcao = { id: EntregaOpcaoId; label: string; taxa: number; estimativa?: boolean };
 
 type PropostaModalState = {
   propostaId: number;
+  cozinheiroId?: number;
   cozinheiroNome: string;
   baseValor: number;
   opcionesEntrega: EntregaOpcao[];
-  selectedEntregaId: string;
+  selectedEntregaId: EntregaOpcaoId;
+  /**
+   * Tempo estimado de entrega em minutos que o cozinheiro prometeu na
+   * proposta. Só faz sentido quando o cliente escolhe `motoboy` — o backend
+   * só propaga o campo para `Pedido` nesse caso (ver PLAN §10.1).
+   */
+  tempoEntregaMin: number | null;
+  /** Distância cliente ↔ cozinheiro em km (PLAN §10). `null` se geo ausente. */
+  distanciaKm: number | null;
   tipoEntrega: string;
   cozinheiroEspecialidade: string;
   cozinheiroNota: number;
@@ -78,6 +92,47 @@ type PropostaModalState = {
   retiradaEndereco: string;
   entregaEnderecoCliente: string;
 };
+
+function formatCep(cep: string): string {
+  const digits = cep.replace(/\D/g, '');
+  if (digits.length === 8) return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+  return cep;
+}
+
+function formatLocation(c: CozinheiroListJson): string {
+  const rua = typeof c.rua === 'string' ? c.rua.trim() : '';
+  if (rua) return rua;
+  const bairroCidade = [c.bairro, c.cidade ?? c.localidade]
+    .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+    .join(', ');
+  if (bairroCidade) return bairroCidade;
+  const cep = typeof c.localizacao === 'string' ? c.localizacao.trim() : '';
+  return cep ? `CEP ${formatCep(cep)}` : '';
+}
+
+function ratingValue(c: CozinheiroListJson): number | null {
+  const candidates = [c.avaliacao, c.nota];
+  for (const v of candidates) {
+    if (typeof v === 'number' && Number.isFinite(v) && v > 0) return v;
+  }
+  return null;
+}
+
+function ratingLabel(c: CozinheiroListJson): string {
+  const v = ratingValue(c);
+  if (v == null) return '—';
+  const total = c.total_avaliacoes ?? 0;
+  return total > 0 ? `★ ${v.toFixed(1)} (${total})` : `★ ${v.toFixed(1)}`;
+}
+
+function tipoEntregaReadable(raw: string | null | undefined): string {
+  if (!raw?.trim()) return '';
+  const x = raw.trim().toLowerCase();
+  if (x === 'delivery') return 'Entrega';
+  if (x === 'retirada') return 'Retirada';
+  if (x === 'ambos') return 'Retirada ou entrega';
+  return raw.trim();
+}
 
 function mapPropostaExtras(p: {
   cozinheiro_especialidade?: string;
@@ -104,16 +159,6 @@ function formatPedidoBrl(n: number) {
 }
 
 const WIN_H = Dimensions.get('window').height;
-
-function iconForEntregaOpcao(id: string): ComponentProps<typeof MaterialIcons>['name'] {
-  const m: Partial<Record<string, ComponentProps<typeof MaterialIcons>['name']>> = {
-    retirada: 'storefront',
-    entrega_bairro: 'delivery-dining',
-    entrega_app: 'restaurant',
-    entrega_uber: 'local-taxi',
-  };
-  return m[id] ?? 'local-shipping';
-}
 
 function taxaResumoLinha(op: EntregaOpcao): string {
   if (op.estimativa && op.taxa > 0) {
@@ -145,10 +190,9 @@ export default function HomeUserScreen() {
   const [pedidosLoading, setPedidosLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [propostaModal, setPropostaModal] = useState<PropostaModalState | null>(null);
+  const [propostaCookDetalhe, setPropostaCookDetalhe] = useState<CozinheiroDetalhesJson | null>(null);
+  const [propostaCookDetalheLoading, setPropostaCookDetalheLoading] = useState(false);
   const [deliveryPickerOpen, setDeliveryPickerOpen] = useState(false);
-  /** Sessão: pedidos cujo lembrete de avaliação o utilizador já dispensou (Fechar) ou já abriu no histórico (Avaliar). */
-  const ratingDismissedRef = useRef<Set<number>>(new Set());
-  const [ratingNudge, setRatingNudge] = useState<PedidoClienteHistoricoJson | null>(null);
 
   const tap = useCallback((fn: () => void) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -171,9 +215,31 @@ export default function HomeUserScreen() {
   }, [propostaModal]);
 
   useEffect(() => {
-    ratingDismissedRef.current.clear();
-    setRatingNudge(null);
-  }, [user?.id]);
+    if (propostaModal == null) {
+      setPropostaCookDetalhe(null);
+      setPropostaCookDetalheLoading(false);
+      return;
+    }
+    const cid = propostaModal.cozinheiroId;
+    if (cid == null) {
+      setPropostaCookDetalhe(null);
+      setPropostaCookDetalheLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setPropostaCookDetalhe(null);
+    setPropostaCookDetalheLoading(true);
+    void (async () => {
+      const res = await fetchCozinheiroDetalhesApi(cid);
+      if (cancelled) return;
+      setPropostaCookDetalheLoading(false);
+      if (res.ok) setPropostaCookDetalhe(res.cozinheiro);
+      else setPropostaCookDetalhe(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [propostaModal?.propostaId, propostaModal?.cozinheiroId]);
 
   const loadPerfil = useCallback(async () => {
     const res = await fetchPerfilClienteApi();
@@ -184,42 +250,29 @@ export default function HomeUserScreen() {
     }
   }, [user?.nome]);
 
-  const loadHomePedidos = useCallback(async () => {
-    setPedidosLoading(true);
-    try {
-      const res = await fetchClienteHomePedidosApi();
-      if (res.ok) {
-        setSolicitacoes(res.solicitacoes);
-        setPedidos(res.pedidos);
-      } else {
-        setSolicitacoes([]);
-        setPedidos([]);
+  const loadHomePedidos = useCallback(
+    async (opts: { silent?: boolean } = {}) => {
+      if (!opts.silent) setPedidosLoading(true);
+      try {
+        const res = await fetchClienteHomePedidosApi();
+        if (res.ok) {
+          setSolicitacoes(res.solicitacoes);
+          setPedidos(res.pedidos);
+        } else if (!opts.silent) {
+          setSolicitacoes([]);
+          setPedidos([]);
+        }
+      } catch {
+        if (!opts.silent) {
+          setSolicitacoes([]);
+          setPedidos([]);
+        }
+      } finally {
+        if (!opts.silent) setPedidosLoading(false);
       }
-    } catch {
-      setSolicitacoes([]);
-      setPedidos([]);
-    } finally {
-      setPedidosLoading(false);
-    }
-  }, []);
-
-  const checkRatingNudge = useCallback(async () => {
-    if (!user || user.tipo !== 'cliente') return;
-    try {
-      const res = await fetchPedidosClienteTodosApi(user.id);
-      if (!res.ok) {
-        setRatingNudge(null);
-        return;
-      }
-      const next = res.pedidos.find(
-        (p) =>
-          p.status === 'entregue' && p.pode_avaliar && !ratingDismissedRef.current.has(p.id),
-      );
-      setRatingNudge(next ?? null);
-    } catch {
-      setRatingNudge(null);
-    }
-  }, [user]);
+    },
+    [],
+  );
 
   const mergedRows = useMemo(() => {
     type Row =
@@ -236,15 +289,36 @@ export default function HomeUserScreen() {
     return all;
   }, [solicitacoes, pedidos]);
 
+  const pollPausedRef = useRef(false);
+  useEffect(() => {
+    pollPausedRef.current = propostaModal != null;
+  }, [propostaModal]);
+
   useFocusEffect(
     useCallback(() => {
       if (!user || user.tipo !== 'cliente') return;
+      let active = true;
       void (async () => {
         await loadPerfil();
+        if (!active) return;
         await loadHomePedidos();
-        await checkRatingNudge();
       })();
-    }, [user, loadPerfil, loadHomePedidos, checkRatingNudge]),
+      /**
+       * Polling silencioso a cada 15s para refletir mudanças feitas por
+       * outro lado (cozinheiro enviou proposta, mudou status do pedido,
+       * etc.) sem o usuário precisar trocar de aba ou relogar. Pausa quando
+       * um modal bloqueante está aberto para não atropelar a interação.
+       */
+      const POLL_MS = 15000;
+      const timer = setInterval(() => {
+        if (!active || pollPausedRef.current) return;
+        void loadHomePedidos({ silent: true });
+      }, POLL_MS);
+      return () => {
+        active = false;
+        clearInterval(timer);
+      };
+    }, [user, loadPerfil, loadHomePedidos]),
   );
 
   const abrirModalProposta = useCallback(
@@ -254,10 +328,13 @@ export default function HomeUserScreen() {
       const opciones = p.opciones_entrega ?? [];
       setPropostaModal({
         propostaId: p.id,
+        cozinheiroId: p.cozinheiro_id,
         cozinheiroNome: p.cozinheiro_nome,
         baseValor: p.base_valor ?? p.valor,
         opcionesEntrega: opciones,
         selectedEntregaId: opciones[0]?.id ?? 'retirada',
+        tempoEntregaMin: p.tempo_entrega_min ?? null,
+        distanciaKm: p.distancia_km ?? null,
         tipoEntrega: p.tipo_entrega,
         ...mapPropostaExtras(p),
       });
@@ -309,13 +386,20 @@ export default function HomeUserScreen() {
       );
       setPropostaModal(null);
       if (r.ok) {
-        await loadHomePedidos();
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        if (aceitar && r.pedidoId != null) {
+          // Checkout fake (PLAN_USUARIO §12): o pedido já foi criado com
+          // `status_pagamento = pendente`; levamos o cliente direto para
+          // a tela de pagamento. O `replace` evita empilhar a home.
+          router.push({ pathname: '/(user)/checkout/[id]', params: { id: String(r.pedidoId) } });
+        } else {
+          await loadHomePedidos();
+        }
       } else {
         Alert.alert('Pedido', r.error);
       }
     },
-    [propostaModal, loadHomePedidos],
+    [propostaModal, loadHomePedidos, router],
   );
 
   const removerRow = useCallback(
@@ -342,6 +426,35 @@ export default function HomeUserScreen() {
     [loadHomePedidos],
   );
 
+  const [confirmingEntregaId, setConfirmingEntregaId] = useState<number | null>(null);
+  const confirmarEntrega = useCallback(
+    (pedidoId: number) => {
+      Alert.alert(
+        'Confirmar entrega',
+        'Você recebeu o pedido?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Confirmar',
+            onPress: () =>
+              void (async () => {
+                setConfirmingEntregaId(pedidoId);
+                const r = await putPedidoStatusApi(pedidoId, 'entregue');
+                setConfirmingEntregaId(null);
+                if (!r.ok) {
+                  Alert.alert('Não deu pra confirmar', r.error);
+                  return;
+                }
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                await loadHomePedidos();
+              })(),
+          },
+        ],
+      );
+    },
+    [loadHomePedidos],
+  );
+
   const onLogout = useCallback(async () => {
     setMenuOpen(false);
     await logout();
@@ -361,58 +474,6 @@ export default function HomeUserScreen() {
 
   return (
     <View style={styles.root}>
-      <Modal
-        visible={ratingNudge != null && propostaModal == null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {
-          if (ratingNudge) ratingDismissedRef.current.add(ratingNudge.id);
-          setRatingNudge(null);
-        }}>
-        <Pressable
-          style={styles.ratingBackdrop}
-          onPress={() => {
-            if (ratingNudge) ratingDismissedRef.current.add(ratingNudge.id);
-            setRatingNudge(null);
-          }}>
-          <Pressable style={styles.ratingCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.ratingTitle}>Pedido entregue</Text>
-            <Text style={styles.ratingBody}>
-              Que tal avaliar o pedido #{ratingNudge ? String(ratingNudge.id).padStart(4, '0') : ''} com{' '}
-              {ratingNudge?.cozinheiro_nome ?? ''}?
-            </Text>
-            <View style={styles.ratingActions}>
-              <Pressable
-                onPress={() =>
-                  tap(() => {
-                    if (ratingNudge) ratingDismissedRef.current.add(ratingNudge.id);
-                    setRatingNudge(null);
-                  })
-                }
-                style={({ pressed }) => [styles.ratingBtnGhost, pressed && styles.pressed]}>
-                <Text style={styles.ratingBtnGhostText}>Fechar</Text>
-              </Pressable>
-              <Pressable
-                onPress={() =>
-                  tap(() => {
-                    if (!ratingNudge) return;
-                    const id = ratingNudge.id;
-                    ratingDismissedRef.current.add(id);
-                    setRatingNudge(null);
-                    router.push({
-                      pathname: '/(user)/receitas-enviadas',
-                      params: { avaliar: String(id) },
-                    });
-                  })
-                }
-                style={({ pressed }) => [styles.ratingBtnPrimary, pressed && styles.pressed]}>
-                <Text style={styles.ratingBtnPrimaryText}>Avaliar</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
       <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
         <Pressable style={styles.menuBackdrop} onPress={() => setMenuOpen(false)}>
           <Pressable style={styles.menuCard} onPress={(e) => e.stopPropagation()}>
@@ -463,28 +524,84 @@ export default function HomeUserScreen() {
                 {propostaModal ? (
                   <>
                     <View style={styles.propostaCookCard}>
-                      <View style={styles.propostaCookHead}>
-                        <Text style={styles.propostaCookName}>{propostaModal.cozinheiroNome}</Text>
-                        {propostaModal.cozinheiroNota > 0 ? (
-                          <Text style={styles.propostaCookStars}>★ {propostaModal.cozinheiroNota.toFixed(1)}</Text>
-                        ) : null}
-                      </View>
-                      {propostaModal.cozinheiroEspecialidade ? (
-                        <Text style={styles.propostaCookTag}>{propostaModal.cozinheiroEspecialidade}</Text>
+                      {propostaCookDetalheLoading && propostaModal.cozinheiroId != null ? (
+                        <ActivityIndicator color={P.green} style={{ marginBottom: 10 }} />
                       ) : null}
-                      {propostaModal.cozinheiroSobre ? (
-                        <Text style={styles.propostaCookBio}>{propostaModal.cozinheiroSobre}</Text>
-                      ) : null}
-                      {propostaModal.cozinheiroRespostaTempo ? (
-                        <Text style={styles.propostaCookMeta}>{propostaModal.cozinheiroRespostaTempo}</Text>
-                      ) : null}
-                      {propostaModal.tempoPreparoLabel ? (
-                        <Text style={styles.propostaCookPrep}>{propostaModal.tempoPreparoLabel}</Text>
-                      ) : null}
-                      <Text style={styles.propostaCookCta}>
-                        {propostaModal.cozinheiroNome.split(' ')[0] ?? propostaModal.cozinheiroNome} aceitou preparar com base na
-                        sua receita e nas observações que você enviou.
-                      </Text>
+                      {(() => {
+                        const ck = propostaCookDetalhe;
+                        const ratingSrc: CozinheiroListJson =
+                          ck ??
+                          ({
+                            avaliacao: propostaModal.cozinheiroNota,
+                            nota: propostaModal.cozinheiroNota,
+                          } as CozinheiroListJson);
+                        const nome =
+                          (ck?.nome && ck.nome.trim()) || propostaModal.cozinheiroNome;
+                        const esp =
+                          (ck?.especialidade && ck.especialidade.trim()) ||
+                          ck?.marmitas?.[0]?.nome ||
+                          propostaModal.cozinheiroEspecialidade ||
+                          '';
+                        const sobre =
+                          (ck?.sobre && ck.sobre.trim()) ||
+                          (ck?.sobre_voce && ck.sobre_voce.trim()) ||
+                          propostaModal.cozinheiroSobre ||
+                          '';
+                        const fotoUri = resolvePublicMediaUrl(ck?.foto ?? null);
+                        const loc = ck ? formatLocation(ck) : '';
+                        const dist = formatDistanciaKm(propostaModal.distanciaKm);
+                        const tipoLinha = [
+                          tipoEntregaReadable(ck?.tipo_entrega ?? propostaModal.tipoEntrega),
+                          loc,
+                          dist,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ');
+                        return (
+                          <>
+                            <View style={styles.propostaCookHeadRow}>
+                              {fotoUri ? (
+                                <Image
+                                  source={{ uri: fotoUri }}
+                                  style={styles.propostaCookAvatar}
+                                  contentFit="cover"
+                                />
+                              ) : (
+                                <Text style={styles.propostaCookEmoji}>👨‍🍳</Text>
+                              )}
+                              <View style={styles.propostaCookHeadCol}>
+                                <View style={styles.propostaCookHead}>
+                                  <Text style={styles.propostaCookName}>{nome}</Text>
+                                  {ratingLabel(ratingSrc) !== '—' ? (
+                                    <Text style={styles.propostaCookStars}>{ratingLabel(ratingSrc)}</Text>
+                                  ) : null}
+                                </View>
+                                {esp ? <Text style={styles.propostaCookTag}>{esp}</Text> : null}
+                              </View>
+                            </View>
+                            {sobre ? (
+                              <Text style={styles.propostaCookBio} numberOfLines={3}>
+                                {sobre}
+                              </Text>
+                            ) : null}
+                            {propostaModal.cozinheiroRespostaTempo ? (
+                              <Text style={styles.propostaCookMeta}>{propostaModal.cozinheiroRespostaTempo}</Text>
+                            ) : null}
+                            {propostaModal.tempoPreparoLabel ? (
+                              <Text style={styles.propostaCookPrep}>{propostaModal.tempoPreparoLabel}</Text>
+                            ) : null}
+                            {tipoLinha ? (
+                              <Text style={styles.propostaCookLocLine} numberOfLines={2}>
+                                {tipoLinha}
+                              </Text>
+                            ) : null}
+                            <Text style={styles.propostaCookCta}>
+                              {nome.split(' ')[0] ?? nome} aceitou preparar com base na sua receita e nas observações que você
+                              enviou.
+                            </Text>
+                          </>
+                        );
+                      })()}
                     </View>
                     {propostaModal.opcionesEntrega.length > 0 ? (
                       <>
@@ -519,6 +636,12 @@ export default function HomeUserScreen() {
                                 ? 'Taxa de entrega: sem custo'
                                 : `Taxa de entrega: R$ ${propostaModalTaxa.toFixed(2)}`}
                           </Text>
+                          {propostaModal.selectedEntregaId === 'motoboy' &&
+                          propostaModal.tempoEntregaMin != null ? (
+                            <Text style={styles.propostaResumoLine}>
+                              Tempo estimado de entrega: ~{propostaModal.tempoEntregaMin} min
+                            </Text>
+                          ) : null}
                           <Text style={styles.propostaTotalPagar}>
                             Total a pagar: R$ {propostaModalTotal.toFixed(2)}
                           </Text>
@@ -602,6 +725,11 @@ export default function HomeUserScreen() {
                             ? 'Sem taxa de entrega'
                             : `Taxa de entrega: + R$ ${op.taxa.toFixed(2)}`}
                       </Text>
+                      {op.id === 'motoboy' && propostaModal?.tempoEntregaMin != null ? (
+                        <Text style={styles.deliveryOptionSub}>
+                          Tempo estimado: ~{propostaModal.tempoEntregaMin} min
+                        </Text>
+                      ) : null}
                     </View>
                     {sel ? (
                       <MaterialIcons name="check-circle" size={24} color={P.green} />
@@ -677,45 +805,75 @@ export default function HomeUserScreen() {
           ) : (
             mergedRows.map((row) =>
               row.kind === 'solicitacao' ? (
-                <View key={`s-${row.item.id}`} style={styles.pedidoCard}>
-                  <View style={styles.pedidoHead}>
-                    <View style={styles.pedidoHeadText}>
-                      <Text style={styles.pedidoId}>
-                        Solicitação #{String(row.item.id).padStart(4, '0')} · {row.item.data} · {row.item.hora}
-                      </Text>
-                      {row.item.situacao === 'aguardando_cozinheiro' && (
-                        <Text style={styles.pedidoUser}>Aguardando um cozinheiro aceitar…</Text>
-                      )}
-                      {row.item.situacao === 'aguardando_cliente' && row.item.proposta_pendente && (
-                        <>
-                          <Text style={styles.pedidoUser}>
-                            Proposta: {row.item.proposta_pendente.cozinheiro_nome} — R${' '}
-                            {row.item.proposta_pendente.valor.toFixed(2)}
+                row.item.proposta_pendente ? (
+                  <Pressable
+                    key={`s-${row.item.id}`}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      abrirModalProposta(row.item);
+                    }}
+                    style={({ pressed }) => [styles.pedidoCard, pressed && styles.pressed]}>
+                    <View style={styles.pedidoHead}>
+                      <View style={styles.pedidoHeadText}>
+                        <View style={styles.solicHeadTitleRow}>
+                          <Text style={styles.pedidoId} numberOfLines={2}>
+                            Solicitação #{String(row.item.id).padStart(4, '0')} · {row.item.data} · {row.item.hora}
                           </Text>
-                          <Pressable onPress={() => tap(() => abrirModalProposta(row.item))}>
-                            <Text style={styles.linkProposta}>Ver detalhes da proposta</Text>
-                          </Pressable>
-                        </>
-                      )}
-                      {row.item.situacao === 'recusada_cliente' && (
-                        <Text style={styles.pedidoMuted}>
-                          Ninguém aceitará esta solicitação (recusou a proposta).
+                          <View style={styles.badgePropostaRec}>
+                            <Text style={styles.badgePropostaRecText}>Proposta recebida</Text>
+                          </View>
+                          <MaterialIcons name="chevron-right" size={20} color={P.textL} />
+                        </View>
+                        <Text style={styles.pedidoUser}>
+                          Proposta de {row.item.proposta_pendente.cozinheiro_nome} — R${' '}
+                          {row.item.proposta_pendente.valor.toFixed(2)}
                         </Text>
-                      )}
+                      </View>
+                      <Pressable
+                        onPress={() => tap(() => removerRow(row))}
+                        hitSlop={8}
+                        style={styles.removeIcon}>
+                        <MaterialIcons name="close" size={22} color={P.textL} />
+                      </Pressable>
                     </View>
-                    <Pressable
-                      onPress={() => tap(() => removerRow(row))}
-                      hitSlop={8}
-                      style={styles.removeIcon}>
-                      <MaterialIcons name="close" size={22} color={P.textL} />
-                    </Pressable>
+                  </Pressable>
+                ) : (
+                  <View key={`s-${row.item.id}`} style={styles.pedidoCard}>
+                    <View style={styles.pedidoHead}>
+                      <View style={styles.pedidoHeadText}>
+                        <Text style={styles.pedidoId}>
+                          Solicitação #{String(row.item.id).padStart(4, '0')} · {row.item.data} · {row.item.hora}
+                        </Text>
+                        {row.item.situacao === 'aguardando_cozinheiro' && (
+                          <Text style={styles.pedidoUser}>Aguardando um cozinheiro aceitar…</Text>
+                        )}
+                        {row.item.situacao === 'recusada_cliente' && (
+                          <Text style={styles.pedidoMuted}>
+                            Você recusou a proposta. Esta solicitação foi encerrada.
+                          </Text>
+                        )}
+                      </View>
+                      <Pressable
+                        onPress={() => tap(() => removerRow(row))}
+                        hitSlop={8}
+                        style={styles.removeIcon}>
+                        <MaterialIcons name="close" size={22} color={P.textL} />
+                      </Pressable>
+                    </View>
                   </View>
-                </View>
+                )
               ) : (
                 <View key={`p-${row.item.id}`} style={styles.pedidoCard}>
                   <View style={styles.pedidoHead}>
                     <Pressable
-                      onPress={() => tap(() => {})}
+                      onPress={() => tap(() => {
+                        if (row.item.status_pagamento === 'pendente') {
+                          router.push({
+                            pathname: '/(user)/checkout/[id]',
+                            params: { id: String(row.item.id) },
+                          });
+                        }
+                      })}
                       style={({ pressed }) => [styles.pedidoHeadMain, pressed && styles.pressed]}>
                       <View>
                         <Text style={styles.pedidoId}>
@@ -723,21 +881,80 @@ export default function HomeUserScreen() {
                         </Text>
                         <Text style={styles.pedidoUser}>{row.item.cozinheiro_nome}</Text>
                       </View>
-                      <View style={styles.badgePrep}>
-                        <Text style={styles.badgePrepText}>{statusBadgeLabel(row.item.status)}</Text>
+                      <View
+                        style={[
+                          styles.badgePrep,
+                          row.item.status === 'saiu_entrega' && styles.badgeDelivery,
+                        ]}>
+                        <Text
+                          style={[
+                            styles.badgePrepText,
+                            row.item.status === 'saiu_entrega' && styles.badgeDeliveryText,
+                          ]}>
+                          {statusBadgeLabel(row.item.status)}
+                        </Text>
                       </View>
                     </Pressable>
-                    <Pressable
-                      onPress={() => tap(() => removerRow(row))}
-                      hitSlop={8}
-                      style={styles.removeIcon}>
-                      <MaterialIcons name="close" size={22} color={P.textL} />
-                    </Pressable>
+                    {row.item.status === 'preparando' || row.item.status === 'saiu_entrega' ? null : (
+                      <Pressable
+                        onPress={() => tap(() => removerRow(row))}
+                        hitSlop={8}
+                        style={styles.removeIcon}>
+                        <MaterialIcons name="close" size={22} color={P.textL} />
+                      </Pressable>
+                    )}
                   </View>
+                  {row.item.status_pagamento === 'pendente' ? (
+                    <Pressable
+                      onPress={() =>
+                        tap(() =>
+                          router.push({
+                            pathname: '/(user)/checkout/[id]',
+                            params: { id: String(row.item.id) },
+                          }),
+                        )
+                      }
+                      style={({ pressed }) => [styles.payCta, pressed && styles.pressed]}>
+                      <MaterialIcons name="payments" size={16} color="#7a4f00" />
+                      <Text style={styles.payCtaText}>Pagamento pendente — finalizar</Text>
+                      <MaterialIcons name="chevron-right" size={18} color="#7a4f00" />
+                    </Pressable>
+                  ) : null}
                   <Text style={styles.pedidoFoot}>
                     {row.item.qtd_marmitas} marmitas · Total R$ {formatPedidoBrl(row.item.valor_total)} ·{' '}
                     {row.item.hora}
                   </Text>
+                  {(() => {
+                    const entregaLinha = pedidoEntregaResumo(row.item);
+                    return entregaLinha ? (
+                      <View style={styles.pedidoEntregaRow}>
+                        <MaterialIcons
+                          name={iconForEntregaOpcao(row.item.entrega_opcao ?? 'retirada')}
+                          size={14}
+                          color={P.textM}
+                        />
+                        <Text style={styles.pedidoEntregaText}>{entregaLinha}</Text>
+                      </View>
+                    ) : null;
+                  })()}
+                  {row.item.status === 'saiu_entrega' && (
+                    <Pressable
+                      disabled={confirmingEntregaId === row.item.id}
+                      onPress={() => tap(() => confirmarEntrega(row.item.id))}
+                      style={({ pressed }) => [
+                        styles.confirmarEntregaBtn,
+                        pressed && styles.pressed,
+                        confirmingEntregaId === row.item.id && styles.disabled,
+                      ]}>
+                      {confirmingEntregaId === row.item.id ? (
+                        <ActivityIndicator color="#fff" />
+                      ) : (
+                        <Text style={styles.confirmarEntregaBtnText}>
+                          Confirmar entrega
+                        </Text>
+                      )}
+                    </Pressable>
+                  )}
                 </View>
               ),
             )
@@ -778,7 +995,9 @@ export default function HomeUserScreen() {
             <MaterialIcons name="home" size={20} color={P.green} />
             <Text style={[styles.bnavLabel, styles.bnavLabelOn]}>Início</Text>
           </View>
-          <Pressable onPress={() => tap(() => {})} style={styles.bnavItem}>
+          <Pressable
+            onPress={() => tap(() => router.push('/(user)/marketplace'))}
+            style={styles.bnavItem}>
             <MaterialIcons name="search" size={20} color={P.textL} />
             <Text style={styles.bnavLabel}>Buscar</Text>
           </Pressable>
@@ -810,65 +1029,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: P.beige,
-  },
-  ratingBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  ratingCard: {
-    backgroundColor: P.white,
-    borderRadius: radius.lg,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: P.beigeD,
-    maxWidth: 400,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  ratingTitle: {
-    fontFamily: fontSerif,
-    fontSize: 18,
-    fontWeight: '700',
-    color: P.text,
-    marginBottom: 10,
-  },
-  ratingBody: {
-    fontSize: 14,
-    color: P.textM,
-    lineHeight: 22,
-    marginBottom: 20,
-  },
-  ratingActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 12,
-    flexWrap: 'wrap',
-  },
-  ratingBtnGhost: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    borderColor: P.beigeMid,
-    backgroundColor: P.white,
-  },
-  ratingBtnGhostText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: P.brownBtn,
-  },
-  ratingBtnPrimary: {
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: radius.md,
-    backgroundColor: P.greenD,
-  },
-  ratingBtnPrimaryText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#fff',
   },
   menuBackdrop: {
     flex: 1,
@@ -1081,18 +1241,31 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 8,
   },
+  solicHeadTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  badgePropostaRec: {
+    backgroundColor: P.greenL,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+  badgePropostaRecText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: P.greenD,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
   pedidoHeadMain: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginRight: 4,
-  },
-  linkProposta: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: P.green,
-    marginTop: 6,
   },
   pedidoMuted: {
     fontSize: 12,
@@ -1275,11 +1448,39 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: P.beigeD,
   },
+  propostaCookHeadRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 10,
+  },
+  propostaCookAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: P.beigeD,
+  },
+  propostaCookEmoji: {
+    fontSize: 40,
+    lineHeight: 56,
+    width: 56,
+    textAlign: 'center',
+  },
+  propostaCookHeadCol: {
+    flex: 1,
+    minWidth: 0,
+  },
   propostaCookHead: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 6,
+  },
+  propostaCookLocLine: {
+    fontSize: 12,
+    color: P.textM,
+    marginBottom: 10,
+    lineHeight: 18,
   },
   propostaCookName: {
     fontSize: 17,
@@ -1412,9 +1613,51 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: P.brownBtn,
   },
+  badgeDelivery: {
+    backgroundColor: '#e3f2fd',
+  },
+  badgeDeliveryText: {
+    color: '#1565c0',
+  },
+  confirmarEntregaBtn: {
+    marginTop: 10,
+    backgroundColor: P.green,
+    paddingVertical: 10,
+    borderRadius: radius.sm,
+    alignItems: 'center',
+  },
+  confirmarEntregaBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  disabled: { opacity: 0.6 },
   pedidoFoot: {
     fontSize: 12,
     color: P.textL,
+  },
+  pedidoEntregaRow: {
+    marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pedidoEntregaText: {
+    fontSize: 12,
+    color: P.textM,
+    flex: 1,
+  },
+  payCta: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff3cc',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  payCtaText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#7a4f00',
+    fontWeight: '600',
   },
   cookGrid: {
     flexDirection: 'row',

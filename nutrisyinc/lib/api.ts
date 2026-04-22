@@ -18,6 +18,16 @@ export function getApiBaseUrl(): string {
   return base.replace(/\/$/, '');
 }
 
+/** Prefix relative `/api/uploads/...` paths for `Image` / `Linking`. */
+export function resolvePublicMediaUrl(link: string | null | undefined): string | null {
+  if (!link) return null;
+  const trimmed = link.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  const base = getApiBaseUrl().replace(/\/$/, '');
+  return `${base}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
+}
+
 /** User-facing message when fetch throws (wrong URL, server down, no Wi‑Fi, etc.). */
 export function getNetworkFailureMessage(caught: unknown): string {
   const base = getApiBaseUrl();
@@ -195,6 +205,36 @@ export type PerfilClienteJson = {
   tipo: 'cliente';
 };
 
+/** `GET /api/perfil` quando usuario_tipo === 'cozinheiro'. */
+export type PerfilCozinheiroJson = {
+  id: number;
+  nome: string;
+  email: string;
+  telefone: string;
+  cep: string;
+  rua: string;
+  numero: number;
+  complemento: string | null;
+  sobre_voce: string | null;
+  tipo_entrega: string | null;
+  especialidade_id: number | null;
+  /** `null` = não oferece moto-boy próprio; habilita a opção `motoboy` na proposta. */
+  taxa_motoboy: number | null;
+  aceita_parceiros: boolean;
+  taxa_parceiros: number | null;
+  tipo: 'cozinheiro';
+};
+
+/** Ids canônicos das formas de entrega (ver `PLAN_USUARIO.md §9.1`). */
+export type EntregaOpcaoId = 'retirada' | 'motoboy' | 'uber' | 'parceiros';
+
+export type EntregaOpcaoJson = {
+  id: EntregaOpcaoId;
+  label: string;
+  taxa: number;
+  estimativa?: boolean;
+};
+
 export type PedidoClienteAtivoJson = {
   id: number;
   cozinheiro_nome: string;
@@ -210,6 +250,28 @@ export type PedidoClienteAtivoJson = {
   proposta: { id: number; valor: number; receita_link: string | null } | null;
   tipo?: 'pedido';
   criado_em_iso?: string;
+  /** Forma de entrega escolhida no aceite da proposta. Opcional para pedidos legados. */
+  entrega_opcao?: EntregaOpcaoId | null;
+  entrega_label?: string | null;
+  taxa_entrega?: number | null;
+  /** Só faz sentido quando `entrega_opcao === 'motoboy'`. */
+  tempo_entrega_min?: number | null;
+  /** Estado do checkout fake (PLAN_USUARIO §12). `pendente` por padrão. */
+  status_pagamento?: StatusPagamento;
+  metodo_pagamento?: MetodoPagamento | null;
+};
+
+export type StatusPagamento = 'pendente' | 'pago' | 'falhou';
+export type MetodoPagamento = 'pix' | 'credito' | 'debito';
+
+/** Snapshot do pagamento retornado pelos endpoints `POST /pagamento/*`. */
+export type PagamentoJson = {
+  pedido_id: number;
+  status_pagamento: StatusPagamento;
+  metodo_pagamento: MetodoPagamento | null;
+  pix_copia_cola: string | null;
+  pagamento_data: string | null;
+  valor: number;
 };
 
 /** Histórico completo (`GET /api/pedidos/cliente/<id>`), incl. entregues e `pode_avaliar`. */
@@ -229,11 +291,17 @@ export type SolicitacaoClienteJson = {
   proposta_pendente: {
     id: number;
     valor: number;
+    /** Presente quando o backend expõe o campo (nutrilho ≥ PLAN_USUARIO). */
+    cozinheiro_id?: number;
     cozinheiro_nome: string;
     tipo_entrega: string;
     /** Preço base antes da taxa de entrega */
     base_valor?: number;
-    opciones_entrega?: { id: string; label: string; taxa: number; estimativa?: boolean }[];
+    opciones_entrega?: EntregaOpcaoJson[];
+    /** Minutos prometidos para moto-boy. `null` quando cozinheiro não oferece ou cliente escolherá retirada. */
+    tempo_entrega_min?: number | null;
+    /** Distância precisa cliente ↔ cozinheiro em km (PLAN §10). `null` se algum lado não tem geo. */
+    distancia_km?: number | null;
     es_demo?: boolean;
     cozinheiro_especialidade?: string;
     cozinheiro_nota?: number;
@@ -246,6 +314,142 @@ export type SolicitacaoClienteJson = {
 };
 
 export type HomePedidoItem = SolicitacaoClienteJson | (PedidoClienteAtivoJson & { tipo: 'pedido' });
+
+/** `GET /api/solicitacoes/abertas` e `GET /api/solicitacoes/<id>` (cozinheiro).
+ * View de descoberta — não contém PII sensível do cliente. */
+export type SolicitacaoAbertaJson = {
+  id: number;
+  cliente_id: number;
+  cliente_nome: string;
+  situacao: 'aguardando_cozinheiro';
+  data: string;
+  hora: string;
+  criado_em_iso: string | null;
+  refeicoes_por_dia: number | null;
+  calorias_diarias: number | null;
+  restricoes: string | null;
+  alimentos_proibidos: string | null;
+  observacoes_nutricionista: string | null;
+  qtd_dias: number | null;
+  porcoes_por_refeicao: number | null;
+  observacoes_adicionais: string | null;
+  receita_link: string | null;
+  ja_tem_proposta_minha: boolean;
+  minha_proposta: {
+    id: number;
+    valor: number;
+    status: number;
+    data_criacao: string | null;
+    tempo_entrega_min?: number | null;
+  } | null;
+  total_propostas: number;
+  /**
+   * Bucket categórico de distância cliente ↔ cozinheiro (PLAN §11). PII-safe:
+   * nunca expõe km precisos — só ex.: `'<1 km'`, `'1–3 km'`, `'20+ km'`.
+   * `null` quando pelo menos um lado não tem geo.
+   */
+  cliente_distancia_bucket?: string | null;
+};
+
+/** Filtros aceitos por `GET /api/solicitacoes/abertas`. */
+export type SolicitacoesAbertasFiltros = {
+  q?: string;
+  minRefeicoes?: number;
+  maxRefeicoes?: number;
+  minCalorias?: number;
+  maxCalorias?: number;
+  /** Default: true no backend. */
+  somenteSemPropostaMinha?: boolean;
+  limit?: number;
+  offset?: number;
+};
+
+/** Resposta do wrapper de criação de proposta. */
+export type PropostaCriadaJson = {
+  id: number;
+  valor: number;
+  status: number;
+  solicitacao_id: number;
+  data_criacao: string;
+  receita_link: string | null;
+};
+
+/** `GET /api/cozinheiros` — marketplace (`web-prototype/cozinheiros.html`).
+ *
+ * Contrato real (confirmado via smoke test no backend em 2026-04-19):
+ * `{ id, nome, avaliacao, especialidade, localizacao (=cep), rua,
+ *   sobre, foto, telefone, tipo_entrega }`. Filtro suportado:
+ * `?especialidade=<nome>`. Não há `q` server-side — busca textual é local.
+ *
+ * Mantemos campos legados (`nota`, `sobre_voce`, `bairro`, `cidade`,
+ * `preco_medio`, `especialidades[]`) opcionais pra não quebrar se um dia
+ * o schema evoluir.
+ */
+export type CozinheiroListJson = {
+  id: number;
+  nome: string;
+  /** Especialidade principal (ex.: "Low carb"). */
+  especialidade?: string | null;
+  /** Especialidades adicionais, quando expostas pelo backend. */
+  especialidades?: string[] | null;
+  /** Média de avaliações vindas da tabela `pedidos` (0–5). */
+  avaliacao?: number | null;
+  /** CEP (ex.: "50710-350") — usado como label de localização. */
+  localizacao?: string | null;
+  /** Endereço livre (ex.: "Rua X, Bairro — Cidade/UF"). */
+  rua?: string | null;
+  /** Texto "sobre mim" do cozinheiro (bio). */
+  sobre?: string | null;
+  /** URL da foto (ou `null`). */
+  foto?: string | null;
+  /** Telefone em formato livre. */
+  telefone?: string | null;
+  /** `delivery` | `retirada` | `ambos`. */
+  tipo_entrega?: 'delivery' | 'retirada' | 'ambos' | string | null;
+  bairro?: string | null;
+  cidade?: string | null;
+  localidade?: string | null;
+  uf?: string | null;
+  nota?: number | null;
+  total_avaliacoes?: number | null;
+  preco_medio?: number | null;
+  sobre_voce?: string | null;
+  /** Distância precisa (km) cliente logado → cozinheiro (PLAN §10). `null` se geo ausente. */
+  distancia_km?: number | null;
+};
+
+/** `GET /api/cozinheiros/<id>` — detalhes do cozinheiro (inclui marmitas). */
+export type CozinheiroDetalhesJson = CozinheiroListJson & {
+  marmitas?:
+    | {
+        id: number;
+        nome: string;
+        preco: number;
+        foto: string | null;
+      }[]
+    | null;
+};
+
+/** `GET /api/cozinheiro/propostas` — inbox do cozinheiro (propostas próprias). */
+export type CozinheiroPropostaListJson = {
+  id: number;
+  solicitacao_id: number;
+  cliente_nome: string;
+  valor: number;
+  status: 0 | 1 | 2;
+  status_texto: string;
+  data_criacao: string;
+  data_criacao_iso?: string | null;
+  data_resposta_cliente?: string | null;
+  /** Minutos prometidos pelo cozinheiro para moto-boy (só populado se ele oferece). */
+  tempo_entrega_min?: number | null;
+};
+
+/** `GET /api/especialidades` — marketplace (chips). */
+export type EspecialidadeJson = {
+  id: number;
+  nome: string;
+};
 
 /** `GET /api/pedidos/cozinheiro/<id>` — painel do cozinheiro. */
 export type PedidoCozinheiroJson = {
@@ -265,6 +469,12 @@ export type PedidoCozinheiroJson = {
     receita_link: string | null;
   } | null;
   endereco_entrega: string;
+  /** Forma de entrega escolhida pelo cliente no aceite da proposta. */
+  entrega_opcao?: EntregaOpcaoId | null;
+  entrega_label?: string | null;
+  taxa_entrega?: number | null;
+  /** Tempo prometido pelo cozinheiro; só faz sentido se `entrega_opcao === 'motoboy'`. */
+  tempo_entrega_min?: number | null;
 };
 
 export async function verificarLoginApi(): Promise<VerificarLoginJson | null> {
@@ -294,6 +504,51 @@ export async function fetchPerfilClienteApi(): Promise<
       ok: false,
       error: err.error || parseNote || `HTTP ${res.status}`,
     };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+/** `GET /api/perfil` (cozinheiro). */
+export async function fetchPerfilCozinheiroApi(): Promise<
+  { ok: true; data: PerfilCozinheiroJson } | { ok: false; error: string }
+> {
+  try {
+    const { res, rawText } = await getJsonRaw('/api/perfil');
+    const { data, parseNote } = parseJsonBody<PerfilCozinheiroJson & { error?: string }>(rawText, res.status);
+    if (
+      res.ok &&
+      data &&
+      typeof data === 'object' &&
+      (data as PerfilCozinheiroJson).tipo === 'cozinheiro'
+    ) {
+      return { ok: true, data: data as PerfilCozinheiroJson };
+    }
+    const err = data as { error?: string };
+    return {
+      ok: false,
+      error: err.error || parseNote || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+/** `PUT /api/perfil` — aceita subset; aqui usamos só os campos de entrega. */
+export async function atualizarPerfilEntregaCozinheiroApi(payload: {
+  taxa_motoboy?: number | null;
+  aceita_parceiros?: boolean;
+  taxa_parceiros?: number | null;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    const body: Record<string, unknown> = {};
+    if ('taxa_motoboy' in payload) body.taxa_motoboy = payload.taxa_motoboy;
+    if ('aceita_parceiros' in payload) body.aceita_parceiros = payload.aceita_parceiros;
+    if ('taxa_parceiros' in payload) body.taxa_parceiros = payload.taxa_parceiros;
+    const { res, rawText } = await putJsonRaw('/api/perfil', body);
+    const { data } = parseJsonBody<{ success?: boolean; error?: string }>(rawText, res.status);
+    if (res.ok && data.success) return { ok: true };
+    return { ok: false, error: (data as { error?: string }).error || `HTTP ${res.status}` };
   } catch (e) {
     return { ok: false, error: getNetworkFailureMessage(e) };
   }
@@ -372,6 +627,294 @@ export async function putPedidoStatusApi(
         parseNote ||
         `HTTP ${res.status}`,
     };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+/** `GET /api/cozinheiros` — lista pública de cozinheiros para o marketplace.
+ *
+ * Parse permissivo: aceita tanto `Array` quanto `{ cozinheiros: [...] }`.
+ */
+export async function fetchCozinheirosApi(filters?: {
+  /** Nome exato da especialidade (ex.: "Low carb"). O backend filtra
+   *  via `?especialidade=<nome>`. Não há `q` server-side; busca textual
+   *  deve ser feita no cliente. */
+  especialidade?: string;
+}): Promise<{ ok: true; cozinheiros: CozinheiroListJson[] } | { ok: false; error: string }> {
+  const params = new URLSearchParams();
+  if (filters?.especialidade && filters.especialidade.trim()) {
+    params.set('especialidade', filters.especialidade.trim());
+  }
+  const qs = params.toString();
+  const path = qs ? `/api/cozinheiros?${qs}` : '/api/cozinheiros';
+  try {
+    const { res, rawText } = await getJsonRaw(path);
+    if (res.ok) {
+      try {
+        const parsed = JSON.parse(rawText) as unknown;
+        if (Array.isArray(parsed)) {
+          return { ok: true, cozinheiros: parsed as CozinheiroListJson[] };
+        }
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          Array.isArray((parsed as { cozinheiros?: unknown }).cozinheiros)
+        ) {
+          return {
+            ok: true,
+            cozinheiros: (parsed as { cozinheiros: CozinheiroListJson[] }).cozinheiros,
+          };
+        }
+      } catch {
+        /* fallthrough */
+      }
+      return { ok: false, error: 'Resposta inválida do servidor.' };
+    }
+    const { data } = parseJsonBody<{ error?: string }>(rawText, res.status);
+    return {
+      ok: false,
+      error: (data as { error?: string }).error || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+/** `GET /api/especialidades` — lista de especialidades para filtros do marketplace. */
+export async function fetchEspecialidadesApi(): Promise<
+  { ok: true; especialidades: EspecialidadeJson[] } | { ok: false; error: string }
+> {
+  try {
+    const { res, rawText } = await getJsonRaw('/api/especialidades');
+    if (res.ok) {
+      try {
+        const parsed = JSON.parse(rawText) as unknown;
+        if (Array.isArray(parsed)) {
+          return { ok: true, especialidades: parsed as EspecialidadeJson[] };
+        }
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          Array.isArray((parsed as { especialidades?: unknown }).especialidades)
+        ) {
+          return {
+            ok: true,
+            especialidades: (parsed as { especialidades: EspecialidadeJson[] }).especialidades,
+          };
+        }
+      } catch {
+        /* fallthrough */
+      }
+      return { ok: false, error: 'Resposta inválida do servidor.' };
+    }
+    const { data } = parseJsonBody<{ error?: string }>(rawText, res.status);
+    return {
+      ok: false,
+      error: (data as { error?: string }).error || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+/** `GET /api/cozinheiros/<id>` — detalhes do cozinheiro para o modal do
+ *  marketplace. Inclui `marmitas` quando o cozinheiro cadastrou alguma.
+ */
+export async function fetchCozinheiroDetalhesApi(
+  id: number,
+): Promise<
+  { ok: true; cozinheiro: CozinheiroDetalhesJson } | { ok: false; error: string }
+> {
+  try {
+    const { res, rawText } = await getJsonRaw(`/api/cozinheiros/${id}`);
+    if (res.ok) {
+      try {
+        const parsed = JSON.parse(rawText) as unknown;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return { ok: true, cozinheiro: parsed as CozinheiroDetalhesJson };
+        }
+      } catch {
+        /* fallthrough */
+      }
+      return { ok: false, error: 'Resposta inválida do servidor.' };
+    }
+    const { data } = parseJsonBody<{ error?: string }>(rawText, res.status);
+    return {
+      ok: false,
+      error: (data as { error?: string }).error || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+export async function fetchCozinheiroPropostasApi(
+  filtros: {
+    status?: 'pendente' | 'aceita' | 'recusada' | 'todas' | '0' | '1' | '2';
+    desde?: string;
+    limit?: number;
+    offset?: number;
+  } = {},
+): Promise<
+  | { ok: true; propostas: CozinheiroPropostaListJson[]; total: number }
+  | { ok: false; error: string }
+> {
+  const params = new URLSearchParams();
+  if (filtros.status != null && filtros.status !== 'todas') {
+    params.set('status', String(filtros.status));
+  }
+  if (filtros.desde?.trim()) params.set('desde', filtros.desde.trim());
+  if (filtros.limit != null) params.set('limit', String(filtros.limit));
+  if (filtros.offset != null) params.set('offset', String(filtros.offset));
+  const qs = params.toString();
+  const path = qs ? `/api/cozinheiro/propostas?${qs}` : '/api/cozinheiro/propostas';
+  try {
+    const { res, rawText } = await getJsonRaw(path);
+    if (res.ok) {
+      try {
+        const parsed = JSON.parse(rawText) as unknown;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const obj = parsed as { propostas?: CozinheiroPropostaListJson[]; total?: number };
+          if (Array.isArray(obj.propostas)) {
+            const total = typeof obj.total === 'number' ? obj.total : obj.propostas.length;
+            return { ok: true, propostas: obj.propostas, total };
+          }
+        }
+        if (Array.isArray(parsed)) {
+          const propostas = parsed as CozinheiroPropostaListJson[];
+          return { ok: true, propostas, total: propostas.length };
+        }
+      } catch {
+        /* fallthrough */
+      }
+      return { ok: false, error: 'Resposta inválida do servidor.' };
+    }
+    const { data } = parseJsonBody<{ error?: string }>(rawText, res.status);
+    return {
+      ok: false,
+      error: (data as { error?: string }).error || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+export async function fetchSolicitacoesAbertasApi(
+  filtros?: SolicitacoesAbertasFiltros,
+): Promise<
+  | { ok: true; solicitacoes: SolicitacaoAbertaJson[]; total: number; limit: number; offset: number }
+  | { ok: false; error: string }
+> {
+  const params = new URLSearchParams();
+  if (filtros?.q && filtros.q.trim()) params.set('q', filtros.q.trim());
+  if (filtros?.minRefeicoes != null) params.set('min_refeicoes', String(filtros.minRefeicoes));
+  if (filtros?.maxRefeicoes != null) params.set('max_refeicoes', String(filtros.maxRefeicoes));
+  if (filtros?.minCalorias != null) params.set('min_calorias', String(filtros.minCalorias));
+  if (filtros?.maxCalorias != null) params.set('max_calorias', String(filtros.maxCalorias));
+  if (filtros?.somenteSemPropostaMinha != null) {
+    params.set('somente_sem_proposta_minha', filtros.somenteSemPropostaMinha ? 'true' : 'false');
+  }
+  if (filtros?.limit != null) params.set('limit', String(filtros.limit));
+  if (filtros?.offset != null) params.set('offset', String(filtros.offset));
+
+  const qs = params.toString();
+  const path = qs ? `/api/solicitacoes/abertas?${qs}` : '/api/solicitacoes/abertas';
+
+  try {
+    const { res, rawText } = await getJsonRaw(path);
+    const { data } = parseJsonBody<{
+      solicitacoes?: SolicitacaoAbertaJson[];
+      total?: number;
+      limit?: number;
+      offset?: number;
+      error?: string;
+    }>(rawText, res.status);
+    if (res.ok && data && Array.isArray(data.solicitacoes)) {
+      return {
+        ok: true,
+        solicitacoes: data.solicitacoes as SolicitacaoAbertaJson[],
+        total: typeof data.total === 'number' ? data.total : data.solicitacoes.length,
+        limit: typeof data.limit === 'number' ? data.limit : data.solicitacoes.length,
+        offset: typeof data.offset === 'number' ? data.offset : 0,
+      };
+    }
+    return {
+      ok: false,
+      error: (data as { error?: string }).error || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+/** `GET /api/solicitacoes/<id>` — retorna a view do cozinheiro quando logado
+ *  como cozinheiro, ou a view do cliente (`SolicitacaoClienteJson`) quando o
+ *  cliente dono está autenticado. Os dois schemas convivem no mesmo endpoint. */
+export async function fetchSolicitacaoDetalheApi(
+  solicitacaoId: number,
+): Promise<
+  | { ok: true; solicitacao: SolicitacaoAbertaJson | SolicitacaoClienteJson }
+  | { ok: false; error: string }
+> {
+  try {
+    const { res, rawText } = await getJsonRaw(`/api/solicitacoes/${solicitacaoId}`);
+    const { data } = parseJsonBody<
+      (SolicitacaoAbertaJson | SolicitacaoClienteJson) & { error?: string }
+    >(rawText, res.status);
+    if (res.ok && data && typeof data === 'object' && 'id' in (data as object)) {
+      return {
+        ok: true,
+        solicitacao: data as SolicitacaoAbertaJson | SolicitacaoClienteJson,
+      };
+    }
+    return {
+      ok: false,
+      error: (data as { error?: string }).error || `HTTP ${res.status}`,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+/** `POST /api/propostas` — cozinheiro envia proposta para uma solicitação.
+ *
+ * `tempo_entrega_min` é obrigatório no backend quando o cozinheiro oferece
+ * moto-boy (`Cozinheiro.taxa_motoboy != null`); aqui o tipo é opcional
+ * porque o frontend só envia quando aplicável. Intervalo aceito: 5..240 min.
+ */
+export async function criarPropostaApi(payload: {
+  solicitacao_id: number;
+  valor: number;
+  tempo_entrega_min?: number;
+}): Promise<
+  | { ok: true; proposta: PropostaCriadaJson }
+  | { ok: false; error: string; duplicadaPropostaId?: number }
+> {
+  try {
+    const body: Record<string, unknown> = {
+      solicitacao_id: payload.solicitacao_id,
+      valor: payload.valor,
+    };
+    if (typeof payload.tempo_entrega_min === 'number') {
+      body.tempo_entrega_min = payload.tempo_entrega_min;
+    }
+    const { res, rawText } = await postJsonRaw('/api/propostas', body);
+    const { data, parseNote } = parseJsonBody<{
+      success?: boolean;
+      proposta?: PropostaCriadaJson;
+      error?: string;
+      proposta_id?: number;
+    }>(rawText, res.status);
+    if (res.ok && data && data.success && data.proposta) {
+      return { ok: true, proposta: data.proposta };
+    }
+    const err = (data as { error?: string }).error || parseNote || `HTTP ${res.status}`;
+    const duplicadaPropostaId =
+      res.status === 409 && typeof (data as { proposta_id?: number }).proposta_id === 'number'
+        ? (data as { proposta_id: number }).proposta_id
+        : undefined;
+    return { ok: false, error: err, duplicadaPropostaId };
   } catch (e) {
     return { ok: false, error: getNetworkFailureMessage(e) };
   }
@@ -500,17 +1043,92 @@ export async function criarSolicitacaoApi(
 export async function responderPropostaClienteApi(
   propostaId: number,
   aceitar: boolean,
-  opts?: { entregaOpcao?: string },
-): Promise<{ ok: true } | { ok: false; error: string }> {
+  opts?: { entregaOpcao?: EntregaOpcaoId },
+): Promise<{ ok: true; pedidoId: number | null } | { ok: false; error: string }> {
   try {
     const body: Record<string, unknown> = { aceitar };
     if (opts?.entregaOpcao) {
-      body.entrega_opcao = opts.entregaOpcao;
+      body.entregaOpcao = opts.entregaOpcao;
     }
     const { res, rawText } = await postJsonRaw(`/api/propostas/${propostaId}/responder-cliente`, body);
-    const { data } = parseJsonBody<{ success?: boolean; error?: string }>(rawText, res.status);
+    const { data } = parseJsonBody<{ success?: boolean; error?: string; pedido_id?: number | null }>(
+      rawText,
+      res.status,
+    );
     if (res.ok && data.success) {
-      return { ok: true };
+      return { ok: true, pedidoId: typeof data.pedido_id === 'number' ? data.pedido_id : null };
+    }
+    return { ok: false, error: (data as { error?: string }).error || `HTTP ${res.status}` };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+export async function iniciarPagamentoApi(
+  pedidoId: number,
+  metodo: MetodoPagamento,
+): Promise<{ ok: true; pagamento: PagamentoJson } | { ok: false; error: string }> {
+  try {
+    const { res, rawText } = await postJsonRaw(`/api/pedidos/${pedidoId}/pagamento/iniciar`, { metodo });
+    const { data } = parseJsonBody<{ success?: boolean; error?: string; pagamento?: PagamentoJson }>(
+      rawText,
+      res.status,
+    );
+    if (res.ok && data.success && data.pagamento) {
+      return { ok: true, pagamento: data.pagamento };
+    }
+    return { ok: false, error: (data as { error?: string }).error || `HTTP ${res.status}` };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+export type PagamentoCartaoInput = {
+  numero: string;
+  validade: string;
+  cvv: string;
+  titular: string;
+};
+
+export async function confirmarPagamentoApi(
+  pedidoId: number,
+  metodo: MetodoPagamento,
+  cartao?: PagamentoCartaoInput,
+): Promise<{ ok: true; pagamento: PagamentoJson } | { ok: false; error: string; field?: string }> {
+  try {
+    const body: Record<string, unknown> = { metodo };
+    if (cartao) body.cartao = cartao;
+    const { res, rawText } = await postJsonRaw(`/api/pedidos/${pedidoId}/pagamento/confirmar`, body);
+    const { data } = parseJsonBody<{
+      success?: boolean;
+      error?: string;
+      field?: string;
+      pagamento?: PagamentoJson;
+    }>(rawText, res.status);
+    if (res.ok && data.success && data.pagamento) {
+      return { ok: true, pagamento: data.pagamento };
+    }
+    return {
+      ok: false,
+      error: (data as { error?: string }).error || `HTTP ${res.status}`,
+      field: (data as { field?: string }).field,
+    };
+  } catch (e) {
+    return { ok: false, error: getNetworkFailureMessage(e) };
+  }
+}
+
+export async function getPagamentoStatusApi(
+  pedidoId: number,
+): Promise<{ ok: true; pagamento: PagamentoJson } | { ok: false; error: string }> {
+  try {
+    const { res, rawText } = await getJsonRaw(`/api/pedidos/${pedidoId}/pagamento`);
+    const { data } = parseJsonBody<{ success?: boolean; error?: string; pagamento?: PagamentoJson }>(
+      rawText,
+      res.status,
+    );
+    if (res.ok && data.success && data.pagamento) {
+      return { ok: true, pagamento: data.pagamento };
     }
     return { ok: false, error: (data as { error?: string }).error || `HTTP ${res.status}` };
   } catch (e) {

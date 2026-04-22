@@ -6,6 +6,8 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,13 +18,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 
 import { LogoIcon } from '@/components/prototype/LogoIcon';
+import { SolicitacaoCard } from '@/components/prototype/SolicitacaoCard';
 import { fontSerif, logoSize, P, radius } from '@/constants/prototypeTheme';
 import { useAuth } from '@/contexts/AuthContext';
 import {
+  fetchCozinheiroPropostasApi,
   fetchPedidosCozinheiroApi,
+  fetchSolicitacoesAbertasApi,
   putPedidoStatusApi,
+  type CozinheiroPropostaListJson,
   type PedidoCozinheiroJson,
+  type SolicitacaoAbertaJson,
 } from '@/lib/api';
+import { loadSeenRecusadasPropostas, markRecusadasPropostasSeen } from '@/lib/cookNotifications';
+import { iconForEntregaOpcao, pedidoEntregaResumo } from '@/lib/entrega';
 import { Routes } from '@/constants/routes';
 
 function formatBrl(n: number): string {
@@ -95,7 +104,7 @@ function nextActions(status: string): { primary?: { label: string; next: string 
         secondary: { label: 'Cancelar', next: 'cancelado' },
       };
     case 'saiu_entrega':
-      return { primary: { label: 'Marcar entregue', next: 'entregue' } };
+      return {};
     default:
       return {};
   }
@@ -105,42 +114,95 @@ export default function CookDashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [pedidos, setPedidos] = useState<PedidoCozinheiroJson[]>([]);
+  const [solicitacoes, setSolicitacoes] = useState<SolicitacaoAbertaJson[]>([]);
+  const [solicitacoesTotal, setSolicitacoesTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [fetchErr, setFetchErr] = useState<string | null>(null);
+  const [propostasRecusadas, setPropostasRecusadas] = useState<CozinheiroPropostaListJson[]>([]);
+  const [seenRecusadasIds, setSeenRecusadasIds] = useState<Set<number>>(new Set());
+  const [recusasSheetOpen, setRecusasSheetOpen] = useState(false);
 
   const uid = user?.id;
 
-  const load = useCallback(async () => {
-    if (user?.tipo !== 'cozinheiro' || uid == null) return;
-    setFetchErr(null);
-    setRefreshing(true);
-    const res = await fetchPedidosCozinheiroApi(uid);
-    if (res.ok) {
-      setPedidos(res.pedidos);
-    } else {
-      setFetchErr(res.error);
-      setPedidos([]);
-    }
-    setLoading(false);
-    setRefreshing(false);
-  }, [user?.tipo, uid]);
+  const naoLidasRecusadas = useMemo(
+    () => propostasRecusadas.filter((p) => !seenRecusadasIds.has(p.id)),
+    [propostasRecusadas, seenRecusadasIds],
+  );
+
+  const load = useCallback(
+    async (opts: { silent?: boolean } = {}) => {
+      if (user?.tipo !== 'cozinheiro' || uid == null) return;
+      if (!opts.silent) {
+        setFetchErr(null);
+        setRefreshing(true);
+      }
+      const [pedRes, solRes, propRes, seen] = await Promise.all([
+        fetchPedidosCozinheiroApi(uid),
+        fetchSolicitacoesAbertasApi({ limit: 3, somenteSemPropostaMinha: true }),
+        fetchCozinheiroPropostasApi({ status: 'recusada', limit: 20 }),
+        loadSeenRecusadasPropostas(),
+      ]);
+      setSeenRecusadasIds(seen);
+      if (pedRes.ok) {
+        setPedidos(pedRes.pedidos);
+      } else if (!opts.silent) {
+        setFetchErr(pedRes.error);
+        setPedidos([]);
+      }
+      if (solRes.ok) {
+        setSolicitacoes(solRes.solicitacoes);
+        setSolicitacoesTotal(solRes.total);
+      } else if (!opts.silent) {
+        setSolicitacoes([]);
+        setSolicitacoesTotal(0);
+      }
+      if (propRes.ok) {
+        setPropostasRecusadas(propRes.propostas);
+      } else if (!opts.silent) {
+        setPropostasRecusadas([]);
+      }
+      if (!opts.silent) {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [user?.tipo, uid],
+  );
 
   useFocusEffect(
     useCallback(() => {
-      load();
+      let active = true;
+      void load();
+      /**
+       * Polling silencioso a cada 15s para refletir chegada de novos
+       * pedidos / solicitações / propostas recusadas sem precisar puxar a
+       * tela ou trocar de aba.
+       */
+      const POLL_MS = 15000;
+      const timer = setInterval(() => {
+        if (!active) return;
+        void load({ silent: true });
+      }, POLL_MS);
+      return () => {
+        active = false;
+        clearInterval(timer);
+      };
     }, [load]),
   );
 
   const { novos, preparo, stats } = useMemo(() => {
     const n: PedidoCozinheiroJson[] = [];
     const p: PedidoCozinheiroJson[] = [];
+    // "Esta semana" agora é receita **realizada**: só soma pedidos
+    // já entregues (ver PLAN_COZINHEIRO_SOLICITACOES.md §10.2). Evita
+    // exibir valor otimista para pedidos ainda em preparo.
     let semana = 0;
     for (const ped of pedidos) {
       if (NOVOS.has(ped.status)) n.push(ped);
       else if (PREPARO.has(ped.status)) p.push(ped);
-      if (ped.status !== 'cancelado' && isInCurrentWeekBr(ped.data)) {
+      if (ped.status === 'entregue' && isInCurrentWeekBr(ped.data)) {
         semana += ped.valor_total;
       }
     }
@@ -228,13 +290,32 @@ export default function CookDashboardScreen() {
           {fetchErr ? (
             <View style={styles.bannerErr}>
               <Text style={styles.bannerErrText}>{fetchErr}</Text>
-              <Pressable onPress={load} style={styles.bannerRetry}>
+              <Pressable onPress={() => void load()} style={styles.bannerRetry}>
                 <Text style={styles.bannerRetryText}>Tentar de novo</Text>
               </Pressable>
             </View>
           ) : null}
 
+          {naoLidasRecusadas.length > 0 ? (
+            <Pressable
+              onPress={() => setRecusasSheetOpen(true)}
+              style={({ pressed }) => [styles.recusaBanner, pressed && styles.pressed]}>
+              <MaterialIcons name="notifications-none" size={22} color="#6d4c00" />
+              <Text style={styles.recusaBannerText}>
+                {naoLidasRecusadas.length} proposta{naoLidasRecusadas.length === 1 ? '' : 's'} recusada
+                {naoLidasRecusadas.length === 1 ? '' : 's'} pelo cliente
+              </Text>
+              <Text style={styles.recusaBannerCta}>Ver</Text>
+            </Pressable>
+          ) : null}
+
           <View style={styles.statsRow}>
+            <Pressable
+              style={styles.statCard}
+              onPress={() => router.push(Routes.cookSolicitacoes)}>
+              <Text style={[styles.statNum, { color: P.green }]}>{solicitacoesTotal}</Text>
+              <Text style={styles.statLbl}>Solicitações</Text>
+            </Pressable>
             <View style={styles.statCard}>
               <Text style={[styles.statNum, { color: P.greenD }]}>{stats.novos}</Text>
               <Text style={styles.statLbl}>Novos</Text>
@@ -244,10 +325,37 @@ export default function CookDashboardScreen() {
               <Text style={styles.statLbl}>Em preparo</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={[styles.statNum, { color: P.text, fontSize: 18 }]}>{formatBrl(stats.semana)}</Text>
-              <Text style={styles.statLbl}>Esta semana</Text>
+              <Text style={[styles.statNum, { color: P.text, fontSize: 16 }]}>
+                {formatBrl(stats.semana)}
+              </Text>
+              <Text style={styles.statLbl}>Entregue na semana</Text>
             </View>
           </View>
+
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, styles.sectionTitleInline]}>Oportunidades</Text>
+            {solicitacoesTotal > 0 ? (
+              <Pressable onPress={() => router.push(Routes.cookSolicitacoes)} hitSlop={6}>
+                <Text style={styles.sectionLink}>Ver todas ({solicitacoesTotal})</Text>
+              </Pressable>
+            ) : null}
+          </View>
+          {solicitacoes.length === 0 ? (
+            <Text style={styles.emptyHint}>
+              Sem novas solicitações de clientes no momento.
+            </Text>
+          ) : (
+            solicitacoes.map((s) => (
+              <SolicitacaoCard
+                key={s.id}
+                solicitacao={s}
+                compact
+                onPress={() => router.push(Routes.cookSolicitacaoDetalhe(s.id))}
+              />
+            ))
+          )}
+
+          <View style={styles.divider} />
 
           <Text style={styles.sectionTitle}>Novos pedidos</Text>
           {novos.length === 0 ? (
@@ -283,6 +391,67 @@ export default function CookDashboardScreen() {
         </ScrollView>
       )}
 
+      <Modal
+        visible={recusasSheetOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setRecusasSheetOpen(false)}>
+        <View style={styles.recusaSheetFill}>
+          <Pressable style={styles.recusaSheetBackdrop} onPress={() => setRecusasSheetOpen(false)} />
+          <SafeAreaView edges={['bottom']} style={styles.recusaSheetCard}>
+            <View style={styles.recusaSheetHandle} />
+            <Text style={styles.recusaSheetTitle}>Propostas recusadas</Text>
+            <Text style={styles.recusaSheetSub}>
+              O cliente recusou estas propostas. Toque para ver o detalhe da solicitação.
+            </Text>
+            <FlatList
+              data={propostasRecusadas}
+              keyExtractor={(p) => String(p.id)}
+              style={styles.recusaSheetList}
+              renderItem={({ item }) => (
+                <Pressable
+                  style={({ pressed }) => [styles.recusaRow, pressed && styles.pressed]}
+                  onPress={() => {
+                    void (async () => {
+                      await markRecusadasPropostasSeen([item.id]);
+                      setSeenRecusadasIds((prev) => new Set([...prev, item.id]));
+                      setRecusasSheetOpen(false);
+                      router.push(Routes.cookSolicitacaoDetalhe(item.solicitacao_id));
+                    })();
+                  }}>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={styles.recusaRowName} numberOfLines={1}>
+                      {item.cliente_nome}
+                    </Text>
+                    <Text style={styles.recusaRowMeta} numberOfLines={1}>
+                      {formatBrl(item.valor)} · {item.data_criacao}
+                    </Text>
+                  </View>
+                  <MaterialIcons name="chevron-right" size={22} color={P.textL} />
+                </Pressable>
+              )}
+            />
+            <Pressable
+              style={({ pressed }) => [styles.recusaMarkAll, pressed && styles.pressed]}
+              onPress={() => {
+                void (async () => {
+                  const ids = propostasRecusadas.map((p) => p.id);
+                  await markRecusadasPropostasSeen(ids);
+                  setSeenRecusadasIds(new Set(ids));
+                  setRecusasSheetOpen(false);
+                })();
+              }}>
+              <Text style={styles.recusaMarkAllText}>Marcar todas como lidas</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.recusaSheetClose, pressed && styles.pressed]}
+              onPress={() => setRecusasSheetOpen(false)}>
+              <Text style={styles.recusaSheetCloseText}>Fechar</Text>
+            </Pressable>
+          </SafeAreaView>
+        </View>
+      </Modal>
+
       <View style={styles.bottomNav}>
         <Pressable style={styles.bnavBtn} onPress={() => {}}>
           <MaterialIcons name="home" size={22} color={P.green} />
@@ -290,13 +459,19 @@ export default function CookDashboardScreen() {
         </Pressable>
         <Pressable
           style={styles.bnavBtn}
-          onPress={() => Alert.alert('Histórico', 'Em breve: histórico completo de pedidos.')}>
+          onPress={() => router.push(Routes.cookSolicitacoes)}>
+          <MaterialIcons name="inbox" size={22} color={P.textL} />
+          <Text style={styles.bnavLabel}>Solicitações</Text>
+        </Pressable>
+        <Pressable
+          style={styles.bnavBtn}
+          onPress={() => router.push(Routes.cookHistorico)}>
           <MaterialIcons name="event-note" size={22} color={P.textL} />
           <Text style={styles.bnavLabel}>Histórico</Text>
         </Pressable>
         <Pressable
           style={styles.bnavBtn}
-          onPress={() => Alert.alert('Perfil', 'Em breve: edição do perfil do cozinheiro.')}>
+          onPress={() => router.push(Routes.cookPerfil)}>
           <MaterialIcons name="person-outline" size={22} color={P.textL} />
           <Text style={styles.bnavLabel}>Perfil</Text>
         </Pressable>
@@ -346,6 +521,19 @@ function PedidoCookCard({
           {pedido.endereco_entrega}
         </Text>
       ) : null}
+      {(() => {
+        const entregaLinha = pedidoEntregaResumo(pedido);
+        return entregaLinha ? (
+          <View style={styles.entregaRow}>
+            <MaterialIcons
+              name={iconForEntregaOpcao(pedido.entrega_opcao)}
+              size={14}
+              color={P.greenD}
+            />
+            <Text style={styles.entregaText}>{entregaLinha}</Text>
+          </View>
+        ) : null;
+      })()}
 
       <View style={styles.receitaBox}>
         <Text style={styles.receitaLbl}>Receita / proposta</Text>
@@ -357,6 +545,14 @@ function PedidoCookCard({
             : 'Sem proposta vinculada neste pedido.'}
         </Text>
       </View>
+
+      {pedido.status === 'saiu_entrega' ? (
+        <View style={styles.waitingPill}>
+          <Text style={styles.waitingPillText}>
+            Aguardando cliente confirmar entrega…
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.actionsRow}>
         {actions.primary ? (
@@ -446,19 +642,110 @@ const styles = StyleSheet.create({
   bannerErrText: { color: P.errorText, fontSize: 13, marginBottom: 8 },
   bannerRetry: { alignSelf: 'flex-start' },
   bannerRetryText: { color: P.greenD, fontWeight: '600', fontSize: 13 },
-  statsRow: { flexDirection: 'row', gap: 9, marginBottom: 18 },
-  statCard: {
+  recusaBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#fff8e1',
+    borderWidth: 1,
+    borderColor: '#ffe082',
+    borderRadius: radius.md,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+  },
+  recusaBannerText: {
     flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6d4c00',
+  },
+  recusaBannerCta: { fontSize: 13, fontWeight: '700', color: '#6d4c00' },
+  recusaSheetFill: { flex: 1, justifyContent: 'flex-end' },
+  recusaSheetBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  recusaSheetCard: {
+    backgroundColor: P.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    maxHeight: '85%',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
+    borderColor: P.beigeD,
+  },
+  recusaSheetHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: P.beigeMid,
+    marginBottom: 14,
+  },
+  recusaSheetTitle: {
+    fontFamily: fontSerif,
+    fontSize: 20,
+    fontWeight: '700',
+    color: P.text,
+    marginBottom: 6,
+  },
+  recusaSheetSub: {
+    fontSize: 13,
+    color: P.textM,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  recusaSheetList: { maxHeight: 320, marginBottom: 8 },
+  recusaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: P.beigeD,
+  },
+  recusaRowName: { fontSize: 15, fontWeight: '600', color: P.text },
+  recusaRowMeta: { fontSize: 12, color: P.textM, marginTop: 4 },
+  recusaMarkAll: {
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  recusaMarkAllText: { fontSize: 14, fontWeight: '600', color: '#6d4c00' },
+  recusaSheetClose: { alignItems: 'center', paddingVertical: 12, marginBottom: 4 },
+  recusaSheetCloseText: { fontSize: 15, fontWeight: '600', color: P.greenD },
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 18,
+  },
+  statCard: {
+    flexGrow: 1,
+    flexBasis: '22%',
+    minWidth: 72,
     backgroundColor: P.white,
     borderWidth: 1,
     borderColor: P.beigeD,
     borderRadius: radius.md,
     paddingVertical: 12,
+    paddingHorizontal: 6,
     alignItems: 'center',
   },
   statNum: { fontSize: 22, fontWeight: '700' },
   statLbl: { fontSize: 11, color: P.textL, marginTop: 4 },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  sectionLink: { fontSize: 12, color: P.greenD, fontWeight: '600' },
   sectionTitle: { fontWeight: '600', fontSize: 14, color: P.text, marginBottom: 10 },
+  sectionTitleInline: { marginBottom: 0 },
   emptyHint: { fontSize: 13, color: P.textL, marginBottom: 12 },
   divider: { height: 1, backgroundColor: P.beigeD, marginVertical: 18 },
   pedidoCard: {
@@ -476,6 +763,13 @@ const styles = StyleSheet.create({
   pbadgeText: { fontSize: 11, fontWeight: '600' },
   pedidoInfo: { fontSize: 13, color: P.textM, marginTop: 10 },
   pedidoAddr: { fontSize: 12, color: P.textL, marginTop: 6 },
+  entregaRow: {
+    marginTop: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  entregaText: { fontSize: 12, color: P.textM, flex: 1 },
   receitaBox: {
     marginTop: 10,
     backgroundColor: P.cream,
@@ -487,6 +781,15 @@ const styles = StyleSheet.create({
   receitaLbl: { fontSize: 11, fontWeight: '600', color: P.textM, marginBottom: 4 },
   receitaBody: { fontSize: 12, color: P.text, lineHeight: 18 },
   actionsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  waitingPill: {
+    marginTop: 12,
+    backgroundColor: '#e3f2fd',
+    borderRadius: radius.sm,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  waitingPillText: { color: '#1565c0', fontSize: 12, fontWeight: '600' },
   btnAccept: {
     flex: 1,
     minWidth: 140,

@@ -1,13 +1,31 @@
 {
   "sessions": {
+    "2979a9e6-59f1-4927-8fc4-027949843dd1": {
+      "user_message_count": 2,
+      "agent_message_count": 46,
+      "start_timestamp": "2026-04-19T14:35:33-03:00",
+      "end_timestamp": "2026-04-19T14:35:33-03:00",
+      "markdown_size_bytes": 24802,
+      "provider": "cursoride",
+      "last_updated": "2026-04-19T20:38:18Z"
+    },
+    "34713382-f488-42d1-b1d2-17bf9bc560f3": {
+      "user_message_count": 22,
+      "agent_message_count": 956,
+      "start_timestamp": "2026-04-15T13:47:45-03:00",
+      "end_timestamp": "2026-04-15T13:47:45-03:00",
+      "markdown_size_bytes": 504691,
+      "provider": "cursoride",
+      "last_updated": "2026-04-19T17:38:45Z"
+    },
     "5062c780-c7d9-4054-a264-70c6f07d847a": {
-      "user_message_count": 25,
-      "agent_message_count": 989,
+      "user_message_count": 49,
+      "agent_message_count": 2123,
       "start_timestamp": "2026-04-16T21:40:09-03:00",
       "end_timestamp": "2026-04-16T21:40:09-03:00",
-      "markdown_size_bytes": 496634,
+      "markdown_size_bytes": 1327400,
       "provider": "cursoride",
-      "last_updated": "2026-04-17T03:12:18Z"
+      "last_updated": "2026-04-19T23:38:23Z"
     },
     "527b3da2-ae0d-4be6-a5b8-9a3bed6eef42": {
       "user_message_count": 5,
@@ -16,16 +34,16 @@
       "end_timestamp": "2026-04-12T20:45:45.115Z",
       "markdown_size_bytes": 102045,
       "provider": "gemini-cli",
-      "last_updated": "2026-04-14T02:33:31Z"
+      "last_updated": "2026-04-19T17:38:34Z"
     },
     "9d7f2b1d-49ef-46c3-a41a-057e7e31dc77": {
-      "user_message_count": 44,
-      "agent_message_count": 958,
+      "user_message_count": 43,
+      "agent_message_count": 925,
       "start_timestamp": "2026-04-13T21:19:00-03:00",
       "end_timestamp": "2026-04-13T21:19:00-03:00",
-      "markdown_size_bytes": 479812,
+      "markdown_size_bytes": 460301,
       "provider": "cursoride",
-      "last_updated": "2026-04-14T02:39:31Z"
+      "last_updated": "2026-04-19T17:38:45Z"
     },
     "b62ff43a-c09f-49e8-a1e6-3bce7a0d18b5": {
       "user_message_count": 7,
@@ -34,7 +52,7 @@
       "end_timestamp": "2026-04-12T17:37:13-03:00",
       "markdown_size_bytes": 63979,
       "provider": "cursoride",
-      "last_updated": "2026-04-14T02:33:42Z"
+      "last_updated": "2026-04-19T17:38:45Z"
     },
     "c66ef5c7-bbcd-42b7-aefd-13742e2c200c": {
       "user_message_count": 0,
@@ -43,7 +61,7 @@
       "end_timestamp": "2026-04-14T00:20:09.012Z",
       "markdown_size_bytes": 162,
       "provider": "gemini-cli",
-      "last_updated": "2026-04-14T02:33:31Z"
+      "last_updated": "2026-04-19T17:38:34Z"
     }
   }
 }
